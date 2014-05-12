@@ -14,25 +14,21 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Simple example worker.
+Simple Func worker.
 """
-
-import os
-
-import subprocess
 
 from reworker.worker import Worker
 
 
-class ShellExec(Worker):
+class FuncWorker(Worker):
     """
-    Simple worker which just executes a shell command.
+    Simple worker which executes remote func calls.
     """
 
     def process(self, channel, basic_deliver, properties, body, output):
         """
-        Executes a local shell command when requested. Only a hardcoded
-        command is allowed in this example!
+        Executes remote func calls when requested. Only a configured
+        calls are allowed!
         """
         # Ack the original message
         self.ack(basic_deliver)
@@ -41,24 +37,10 @@ class ShellExec(Worker):
         self.send(
             properties.reply_to, corr_id, {'status': 'started'}, exchange='')
 
-        # Start the ls
-        command = ['/bin/ls', '-la']
-        output.info('Command: %s' % " ".join(command))
-        output.info('Location: %s' % os.getcwd())
-
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-
-        # Record the results to our output stream
-        for line in process.communicate():
-            output.info(line[:-1])
-
-        output.debug('return value: %s' % process.returncode)
+        # TODO: Put logic stuff here
 
         # Notify the final state based on the return code
-        if process.returncode == 0:
+        if True:
             self.send(
                 properties.reply_to,
                 corr_id,
@@ -67,9 +49,9 @@ class ShellExec(Worker):
             )
             # Notify on result. Not required but nice to do.
             self.notify(
-                'ShellExec Executed Successfully',
-                'ShellExec successfully executed %s. See logs.' % " ".join(
-                    command),
+                'FuncWorker Executed Successfully',
+                'FuncWorker successfully executed %s. See logs.' % " ".join(
+                    "PUT SOMETHING HELPFUL HERE"),
                 'completed',
                 corr_id)
 
@@ -82,13 +64,12 @@ class ShellExec(Worker):
             )
             # Notify on result. Not required but nice to do.
             self.notify(
-                'ShellExec Failed',
-                'ShellExec failed trying to execute %s. See logs.' % " ".join(
-                    command),
+                'FuncWorker Failed',
+                'FuncWorker failed trying to execute %s. See logs.' % " ".join(
+                    "PUT SOMETHING HELPFUL HERE"),
                 'failed',
                 corr_id)
 
-        print "Handled a message"
 
 
 if __name__ == '__main__':
@@ -99,5 +80,5 @@ if __name__ == '__main__':
         'user': 'guest',
         'password': 'guest',
     }
-    worker = ShellExec(mq_conf, output_dir='/tmp/logs/')
+    worker = FuncWorker(mq_conf, output_dir='/tmp/logs/')
     worker.run_forever()

@@ -1,4 +1,4 @@
-re-worker-shellexec
-===================
+re-worker-func
+==============
 
-Shell Command Execution Worker for Release Engine
+Func Worker for Release Engine
