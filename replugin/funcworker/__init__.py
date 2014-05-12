@@ -19,6 +19,15 @@ Simple Func worker.
 
 from reworker.worker import Worker
 
+#  import func.overlord.client as fc
+
+
+class FuncWorkerError(Exception):
+    """
+    Base exception class for FuncWorker errors.
+    """
+    pass
+
 
 class FuncWorker(Worker):
     """
@@ -29,6 +38,12 @@ class FuncWorker(Worker):
         """
         Executes remote func calls when requested. Only a configured
         calls are allowed!
+
+        `Params Required`:
+            * command: list of hosts to run the func command on.
+            * subcommand: What do do with the targeted command.
+            * hosts: list of hosts to run the func command on.
+            ....
         """
         # Ack the original message
         self.ack(basic_deliver)
@@ -37,39 +52,71 @@ class FuncWorker(Worker):
         self.send(
             properties.reply_to, corr_id, {'status': 'started'}, exchange='')
 
-        # TODO: Put logic stuff here
+        try:
+            try:
+                params = body['params']
+            except KeyError:
+                raise FuncWorkerError(
+                    'Params dictionary not passed to FuncWorker.'
+                    ' Nothing to do!')
+            # First verify it's a command we should be working with
+            if params['command'] not in self._config.keys():
+                raise FuncWorkerError(
+                    'This worker only handles: %s' % self._config.keys())
+            command_cfg = self._config[params['command']]
 
-        # Notify the final state based on the return code
-        if True:
-            self.send(
-                properties.reply_to,
-                corr_id,
-                {'status': 'completed'},
-                exchange=''
-            )
-            # Notify on result. Not required but nice to do.
-            self.notify(
-                'FuncWorker Executed Successfully',
-                'FuncWorker successfully executed %s. See logs.' % " ".join(
-                    "PUT SOMETHING HELPFUL HERE"),
-                'completed',
-                corr_id)
+            if params['subcommand'] not in command_cfg.keys():
+                raise FuncWorkerError(
+                    'Requested subcommand for %s is not supported '
+                    'by this worker' % params['command'])
 
-        else:
+            # Next verify we have what we need.
+            required_params = command_cfg[params['subcommand']]
+            for required in required_params:
+                if required not in body['params'].keys():
+                    raise FuncWorkerError(
+                        'Command %s.%s requires the following params: %s. '
+                        '%s was missing.' % (
+                            params['command'],
+                            params['subcommand'],
+                            command_cfg[params['subcommand']]))
+
+            output.info('Executing func command ...')
+
+            # Notify the final state based on the return code
+            if True:
+                self.send(
+                    properties.reply_to,
+                    corr_id,
+                    {'status': 'completed'},
+                    exchange=''
+                )
+                # Notify on result. Not required but nice to do.
+                self.notify(
+                    'FuncWorker Executed Successfully',
+                    'FuncWorker successfully executed %s. See logs.' % (
+                        "PUT SOMETHING HELPFUL HERE"),
+                    'completed',
+                    corr_id)
+            else:
+                raise FuncWorkerError(
+                    'FuncWorker failed trying to execute %s. See logs.' % (
+                        "PUT SOMETHING HELPFUL HERE"))
+        except FuncWorkerError, fwe:
+            # If a FuncWorkerError happens send a failure, notify and log
+            # the info for review.
             self.send(
                 properties.reply_to,
                 corr_id,
                 {'status': 'failed'},
                 exchange=''
             )
-            # Notify on result. Not required but nice to do.
             self.notify(
                 'FuncWorker Failed',
-                'FuncWorker failed trying to execute %s. See logs.' % " ".join(
-                    "PUT SOMETHING HELPFUL HERE"),
+                str(fwe),
                 'failed',
                 corr_id)
-
+            output.error(str(fwe))
 
 
 if __name__ == '__main__':
@@ -80,5 +127,8 @@ if __name__ == '__main__':
         'user': 'guest',
         'password': 'guest',
     }
-    worker = FuncWorker(mq_conf, output_dir='/tmp/logs/')
+    worker = FuncWorker(
+        mq_conf,
+        config_file='conf/example.json',
+        output_dir='/tmp/logs/')
     worker.run_forever()
