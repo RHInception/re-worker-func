@@ -33,6 +33,7 @@ MQ_CONF = {
 CONFIG_FILE = 'conf/example.json'
 
 
+@mock.patch('func.overlord.client.Client')
 class TestFuncWorker(TestCase):
 
     def setUp(self):
@@ -71,7 +72,7 @@ class TestFuncWorker(TestCase):
         # Log should happen as an error
         assert self.logger.error.call_count == 1
 
-    def test_command_params(self):
+    def test_command_params(self, fc):
         """
         Verify that if params are missing proper responses occur.
         """
@@ -96,7 +97,7 @@ class TestFuncWorker(TestCase):
                     self._assert_error_conditions(
                         worker, 'Params dictionary not passed')
 
-    def test_command_whitelist(self):
+    def test_command_whitelist(self, fc):
         """
         Verify that if a command that is not in the whitelist is attempted
         the worker fails properly.
@@ -129,7 +130,7 @@ class TestFuncWorker(TestCase):
                     self._assert_error_conditions(
                         worker, 'This worker only handles')
 
-    def test_subcommand_whitelist(self):
+    def test_subcommand_whitelist(self, fc):
         """
         Verify that if a subcommand that is not in the whitelist is attempted
         the worker fails properly.
@@ -163,7 +164,7 @@ class TestFuncWorker(TestCase):
                     self._assert_error_conditions(
                         worker, 'Requested subcommand for')
 
-    def test_good_request(self):
+    def test_good_request(self, fc):
         """
         Verify when a good request is received the worker executes as
         expected.
@@ -184,7 +185,7 @@ class TestFuncWorker(TestCase):
                             'command': 'service',
                             'subcommand': 'start',
                             'service': 'test_service'
-                        },
+                        }
                     }
 
                     # Execute the call
@@ -200,10 +201,16 @@ class TestFuncWorker(TestCase):
                         'status': 'completed',
                     }
 
-                    # Notification should be a failure
+                    # Notification should succeed
                     assert worker.notify.call_count == 1
                     expected = 'successfully executed'
                     assert expected in worker.notify.call_args[0][1]
                     assert worker.notify.call_args[0][2] == 'completed'
-                    # Log should happen as an error
+                    # Log should happen as info at least once
                     assert self.logger.info.call_count >= 1
+
+                    # Func should call to create the client
+                    assert fc.call_count == 1
+                    # And the client should execute service.start
+                    fc().service.start.assert_called_once_with(
+                        service='test_service')

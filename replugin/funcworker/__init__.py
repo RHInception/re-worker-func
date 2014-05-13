@@ -19,7 +19,7 @@ Simple Func worker.
 
 from reworker.worker import Worker
 
-#  import func.overlord.client as fc
+import func.overlord.client as fc
 
 
 class FuncWorkerError(Exception):
@@ -70,7 +70,8 @@ class FuncWorker(Worker):
                     'Requested subcommand for %s is not supported '
                     'by this worker' % params['command'])
 
-            # Next verify we have what we need.
+            # Next verify we have what we need (and make our target_params too)
+            target_params = {}
             required_params = command_cfg[params['subcommand']]
             for required in required_params:
                 if required not in body['params'].keys():
@@ -81,7 +82,18 @@ class FuncWorker(Worker):
                             params['subcommand'],
                             command_cfg[params['subcommand']]))
 
+                target_params[required] = body['params'][required]
+
             output.info('Executing func command ...')
+
+            try:
+                client = fc.Client('127.0.0.1')
+                target_callable = getattr(getattr(
+                    client, params['command']), params['subcommand'])
+                target_callable(**target_params)
+            except Exception, ex:
+                # TODO: Catch and repackage func error
+                raise ex
 
             # Notify the final state based on the return code
             if True:
