@@ -21,6 +21,8 @@ from reworker.worker import Worker
 
 import func.overlord.client as fc
 
+from func.minion.codes import FuncException
+
 
 class FuncWorkerError(Exception):
     """
@@ -80,7 +82,8 @@ class FuncWorker(Worker):
                         '%s was missing.' % (
                             params['command'],
                             params['subcommand'],
-                            command_cfg[params['subcommand']]))
+                            command_cfg[params['subcommand']],
+                            required))
 
                 target_params[required] = body['params'][required]
 
@@ -91,9 +94,8 @@ class FuncWorker(Worker):
                 target_callable = getattr(getattr(
                     client, params['command']), params['subcommand'])
                 target_callable(**target_params)
-            except Exception, ex:
-                # TODO: Catch and repackage func error
-                raise ex
+            except FuncException, fex:
+                raise FuncWorkerError(str(fex))
 
             # Notify the final state based on the return code
             if True:

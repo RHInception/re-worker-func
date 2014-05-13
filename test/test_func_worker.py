@@ -24,6 +24,8 @@ from contextlib import nested
 from . import TestCase
 
 from replugin import funcworker
+from func.minion.codes import FuncException
+
 
 MQ_CONF = {
     'server': '127.0.0.1',
@@ -169,6 +171,44 @@ class TestFuncWorker(TestCase):
 
             self._assert_error_conditions(
                 worker, 'Requested subcommand for')
+
+    def test_func_client_error(self, fc):
+        """
+        Check that func errors fail properly.
+        """
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                config_file=CONFIG_FILE,
+                output_dir='/tmp/logs/')
+
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
+            # Make the Func client raise an exception
+            fc.side_effect = FuncException('Func error raised.')
+
+            # Good data
+            body = {
+                'params': {
+                    'command': 'service',
+                    'subcommand': 'start',
+                    'service': 'test_service',
+                },
+            }
+
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
+
+            self._assert_error_conditions(
+                worker, 'Func error raised.')
 
     def test_good_request(self, fc):
         """
