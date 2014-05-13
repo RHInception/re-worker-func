@@ -106,6 +106,8 @@ class FuncWorker(Worker):
                         success = False
                     output.info('%s returned %s for command %s' % (
                         key, val, called))
+                # TODO: Response information should be sent back
+                # to FSM for storage
             except FuncException, fex:
                 raise FuncWorkerError(str(fex))
 
