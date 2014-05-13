@@ -59,6 +59,7 @@ class TestFuncWorker(TestCase):
             reply_to='me')
 
         self.logger = mock.MagicMock('logging.Logger').__call__()
+        self.app_logger = mock.MagicMock('logging.Logger').__call__()
         self.connection = mock.MagicMock('pika.SelectConnection')
 
     def _assert_error_conditions(self, worker, error_msg):
@@ -86,6 +87,7 @@ class TestFuncWorker(TestCase):
                 mock.patch('replugin.funcworker.FuncWorker.send')):
             worker = funcworker.FuncWorker(
                 MQ_CONF,
+                logger=self.app_logger,
                 config_file=CONFIG_FILE,
                 output_dir='/tmp/logs/')
 
@@ -114,6 +116,7 @@ class TestFuncWorker(TestCase):
                 mock.patch('replugin.funcworker.FuncWorker.send')):
             worker = funcworker.FuncWorker(
                 MQ_CONF,
+                logger=self.app_logger,
                 config_file=CONFIG_FILE,
                 output_dir='/tmp/logs/')
 
@@ -148,6 +151,7 @@ class TestFuncWorker(TestCase):
                 mock.patch('replugin.funcworker.FuncWorker.send')):
             worker = funcworker.FuncWorker(
                 MQ_CONF,
+                logger=self.app_logger,
                 config_file=CONFIG_FILE,
                 output_dir='/tmp/logs/')
 
@@ -182,6 +186,7 @@ class TestFuncWorker(TestCase):
                 mock.patch('replugin.funcworker.FuncWorker.send')):
             worker = funcworker.FuncWorker(
                 MQ_CONF,
+                logger=self.app_logger,
                 config_file=CONFIG_FILE,
                 output_dir='/tmp/logs/')
 
@@ -221,6 +226,7 @@ class TestFuncWorker(TestCase):
                 mock.patch('replugin.funcworker.FuncWorker.send')):
             worker = funcworker.FuncWorker(
                 MQ_CONF,
+                logger=self.app_logger,
                 config_file=CONFIG_FILE,
                 output_dir='/tmp/logs/')
 
