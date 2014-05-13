@@ -313,8 +313,11 @@ class TestFuncWorker(TestCase):
                 # Func should call to create the client
                 # Note: it's called one extra time for mocking
                 assert fc.call_count == 2
-                # And the client should execute service.start
-                fc().service.start.assert_with(service='test_service')
+                # And the client should execute expected calls
+                target = getattr(getattr(fc(), cmd), sub)
+                assert target.call_count == 1
+                target.assert_called_with(*[
+                    'test_data' for x in range(len(rargs))])
 
             # Force reset
             fc.reset_mock()

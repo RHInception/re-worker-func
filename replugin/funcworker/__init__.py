@@ -73,7 +73,7 @@ class FuncWorker(Worker):
                     'by this worker' % params['command'])
 
             # Next verify we have what we need (and make our target_params too)
-            target_params = {}
+            target_params = []
             required_params = command_cfg[params['subcommand']]
             for required in required_params:
                 if required not in body['params'].keys():
@@ -85,7 +85,7 @@ class FuncWorker(Worker):
                             command_cfg[params['subcommand']],
                             required))
 
-                target_params[required] = body['params'][required]
+                target_params.append(body['params'][required])
 
             try:
                 output.info('Executing func command ...')
@@ -94,12 +94,12 @@ class FuncWorker(Worker):
                 target_callable = getattr(getattr(
                     client, params['command']), params['subcommand'])
 
-                results = target_callable(**target_params)
+                results = target_callable(*target_params)
 
                 # success set to False if anything returns non 0
                 success = True
                 # called is a nice repr of the command
-                called = '%s.%s(**%s)' % (
+                called = '%s.%s(*%s)' % (
                     params['command'], params['subcommand'], target_params)
                 for key, val in results.items():
                     if val != 0:
