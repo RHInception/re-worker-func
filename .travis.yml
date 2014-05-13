@@ -4,6 +4,7 @@ python:
 install:
     - "pip install -r requirements-travis.txt --use-mirrors"
     - "pip install pep8 nose coverage mock"
+    - "(wget https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && python setup.py install) || /bin/true"
 script:
     - "pep8 replugin/"
 notifications:
