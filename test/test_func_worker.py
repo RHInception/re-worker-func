@@ -273,10 +273,12 @@ class TestFuncWorker(TestCase):
 
                 # Make the Func return data
                 # NOTE: this causes fc's call count to ++
-                fc().service.start.return_value = {
+                results = {
                     '127.0.0.1': 0,
                 }
 
+                target = getattr(getattr(fc(), cmd), sub)
+                target.return_value = results
                 worker._on_open(self.connection)
                 worker._on_channel_open(self.channel)
 
@@ -298,8 +300,9 @@ class TestFuncWorker(TestCase):
                     self.logger)
 
                 assert worker.send.call_count == 2  # start then success
+                print worker.send.call_args
                 assert worker.send.call_args[0][2] == {
-                    'status': 'completed',
+                    'status': 'completed', 'data': results,
                 }
 
                 # Notification should succeed
@@ -314,7 +317,6 @@ class TestFuncWorker(TestCase):
                 # Note: it's called one extra time for mocking
                 assert fc.call_count == 2
                 # And the client should execute expected calls
-                target = getattr(getattr(fc(), cmd), sub)
                 assert target.call_count == 1
                 target.assert_called_with(*[
                     'test_data' for x in range(len(rargs))])
