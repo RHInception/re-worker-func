@@ -35,7 +35,7 @@ MQ_CONF = {
     'user': 'guest',
     'password': 'guest',
 }
-CONFIG_FILE = 'conf/example.json'
+CONFIG_FILE = 'conf/service.json'
 
 
 @mock.patch('func.overlord.client.Client')
