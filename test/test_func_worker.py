@@ -35,7 +35,12 @@ MQ_CONF = {
     'user': 'guest',
     'password': 'guest',
 }
-CONFIG_FILE = 'conf/service.json'
+
+CONFIG_FILES = (
+    # FILENAME            COMMAND    SUBCMD   REQUIRED ARGS
+    ('conf/service.json', 'service', 'start', ['service']),
+    ('conf/yumcmd.json', 'yumcmd', 'update', [])
+)
 
 
 @mock.patch('func.overlord.client.Client')
@@ -63,6 +68,29 @@ class TestFuncWorker(TestCase):
         self.app_logger = mock.MagicMock('logging.Logger').__call__()
         self.connection = mock.MagicMock('pika.SelectConnection')
 
+    def tearDown(self):
+        """
+        After every test.
+        """
+        TestCase.tearDown(self)
+        self._reset_mocks()
+
+    def _reset_mocks(self):
+        """
+        Force reset mocks.
+        """
+        self.channel.reset_mock()
+        self.channel.basic_consume.reset_mock()
+        self.channel.basic_ack.reset_mock()
+        self.channel.basic_publish.reset_mock()
+
+        self.basic_deliver.reset_mock()
+        self.properties.reset_mock()
+
+        self.logger.reset_mock()
+        self.app_logger.reset_mock()
+        self.connection.reset_mock()
+
     def _assert_error_conditions(self, worker, error_msg):
         """
         Common asserts for handled errors.
@@ -89,7 +117,7 @@ class TestFuncWorker(TestCase):
             worker = funcworker.FuncWorker(
                 MQ_CONF,
                 logger=self.app_logger,
-                config_file=CONFIG_FILE,
+                config_file=CONFIG_FILES[0][0],
                 output_dir='/tmp/logs/')
 
             worker._on_open(self.connection)
@@ -111,210 +139,234 @@ class TestFuncWorker(TestCase):
         Verify that if a command that is not in the whitelist is attempted
         the worker fails properly.
         """
-        with nested(
-                mock.patch('pika.SelectConnection'),
-                mock.patch('replugin.funcworker.FuncWorker.notify'),
-                mock.patch('replugin.funcworker.FuncWorker.send')):
-            worker = funcworker.FuncWorker(
-                MQ_CONF,
-                logger=self.app_logger,
-                config_file=CONFIG_FILE,
-                output_dir='/tmp/logs/')
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
 
-            worker._on_open(self.connection)
-            worker._on_channel_open(self.channel)
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
 
-            body = {
-                'params': {
-                    'command': 'NOTWHITELISTED',
-                },
-            }
+                body = {
+                    'params': {
+                        'command': 'NOTWHITELISTED',
+                    },
+                }
 
-            # Execute the call
-            worker.process(
-                self.channel,
-                self.basic_deliver,
-                self.properties,
-                body,
-                self.logger)
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
 
-            self._assert_error_conditions(
-                worker, 'This worker only handles')
+                self._assert_error_conditions(
+                    worker, 'This worker only handles')
+            # Force reset
+            self._reset_mocks()
 
     def test_subcommand_whitelist(self, fc):
         """
         Verify that if a subcommand that is not in the whitelist is attempted
         the worker fails properly.
         """
-        with nested(
-                mock.patch('pika.SelectConnection'),
-                mock.patch('replugin.funcworker.FuncWorker.notify'),
-                mock.patch('replugin.funcworker.FuncWorker.send')):
-            worker = funcworker.FuncWorker(
-                MQ_CONF,
-                logger=self.app_logger,
-                config_file=CONFIG_FILE,
-                output_dir='/tmp/logs/')
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
 
-            worker._on_open(self.connection)
-            worker._on_channel_open(self.channel)
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
 
-            body = {
-                'params': {
-                    'command': 'service',
-                    'subcommand': 'UNKNOWNSUBCOMMAND',
-                },
-            }
+                body = {
+                    'params': {
+                        'command': cmd,
+                        'subcommand': 'UNKNOWNSUBCOMMAND',
+                    },
+                }
 
-            # Execute the call
-            worker.process(
-                self.channel,
-                self.basic_deliver,
-                self.properties,
-                body,
-                self.logger)
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
 
-            self._assert_error_conditions(
-                worker, 'Requested subcommand for')
+                self._assert_error_conditions(
+                    worker, 'Requested subcommand for')
+
+            # Force reset
+            self._reset_mocks()
 
     def test_func_client_error(self, fc):
         """
         Check that func errors fail properly.
         """
-        with nested(
-                mock.patch('pika.SelectConnection'),
-                mock.patch('replugin.funcworker.FuncWorker.notify'),
-                mock.patch('replugin.funcworker.FuncWorker.send')):
-            worker = funcworker.FuncWorker(
-                MQ_CONF,
-                logger=self.app_logger,
-                config_file=CONFIG_FILE,
-                output_dir='/tmp/logs/')
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
 
-            worker._on_open(self.connection)
-            worker._on_channel_open(self.channel)
-            # Make the Func client raise an exception
-            fc.side_effect = FuncException('Func error raised.')
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
+                # Make the Func client raise an exception
+                fc.side_effect = FuncException('Func error raised.')
 
-            # Good data
-            body = {
-                'params': {
-                    'command': 'service',
-                    'subcommand': 'start',
-                    'service': 'test_service',
-                },
-            }
+                # Good data
+                body = {
+                    'params': {
+                        'command': cmd,
+                        'subcommand': sub,
+                    },
+                }
+                for key in rargs:
+                    body['params'][key] = 'test_data'
 
-            # Execute the call
-            worker.process(
-                self.channel,
-                self.basic_deliver,
-                self.properties,
-                body,
-                self.logger)
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
 
-            self._assert_error_conditions(
-                worker, 'Func error raised.')
+                self._assert_error_conditions(
+                    worker, 'Func error raised.')
+            # Force reset
+            self._reset_mocks()
 
     def test_good_request(self, fc):
         """
         Verify when a good request is received the worker executes as
         expected.
         """
-        with nested(
-                mock.patch('pika.SelectConnection'),
-                mock.patch('replugin.funcworker.FuncWorker.notify'),
-                mock.patch('replugin.funcworker.FuncWorker.send')):
-            worker = funcworker.FuncWorker(
-                MQ_CONF,
-                logger=self.app_logger,
-                config_file=CONFIG_FILE,
-                output_dir='/tmp/logs/')
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
 
-            # Make the Func return data
-            # NOTE: this causes fc's call count to ++
-            fc().service.start.return_value = {
-                '127.0.0.1': 0,
-            }
-
-            worker._on_open(self.connection)
-            worker._on_channel_open(self.channel)
-
-            body = {
-                'params': {
-                    'command': 'service',
-                    'subcommand': 'start',
-                    'service': 'test_service'
+                # Make the Func return data
+                # NOTE: this causes fc's call count to ++
+                fc().service.start.return_value = {
+                    '127.0.0.1': 0,
                 }
-            }
 
-            # Execute the call
-            worker.process(
-                self.channel,
-                self.basic_deliver,
-                self.properties,
-                body,
-                self.logger)
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
 
-            assert worker.send.call_count == 2  # start then success
-            assert worker.send.call_args[0][2] == {
-                'status': 'completed',
-            }
+                body = {
+                    'params': {
+                        'command': cmd,
+                        'subcommand': sub,
+                    }
+                }
+                for key in rargs:
+                    body['params'][key] = 'test_data'
 
-            # Notification should succeed
-            assert worker.notify.call_count == 1
-            expected = 'successfully executed'
-            assert expected in worker.notify.call_args[0][1]
-            assert worker.notify.call_args[0][2] == 'completed'
-            # Log should happen as info at least once
-            assert self.logger.info.call_count >= 1
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
 
-            # Func should call to create the client
-            # Note: it's called one extra time for mocking
-            assert fc.call_count == 2
-            # And the client should execute service.start
-            fc().service.start.assert_with(service='test_service')
+                assert worker.send.call_count == 2  # start then success
+                assert worker.send.call_args[0][2] == {
+                    'status': 'completed',
+                }
+
+                # Notification should succeed
+                assert worker.notify.call_count == 1
+                expected = 'successfully executed'
+                assert expected in worker.notify.call_args[0][1]
+                assert worker.notify.call_args[0][2] == 'completed'
+                # Log should happen as info at least once
+                assert self.logger.info.call_count >= 1
+
+                # Func should call to create the client
+                # Note: it's called one extra time for mocking
+                assert fc.call_count == 2
+                # And the client should execute service.start
+                fc().service.start.assert_with(service='test_service')
+
+            # Force reset
+            fc.reset_mock()
+            self._reset_mocks()
 
     def test_good_request_with_bad_response(self, fc):
         """
         Verify when a good request is received but func notes an issue
         the proper result occurs.
         """
-        with nested(
-                mock.patch('pika.SelectConnection'),
-                mock.patch('replugin.funcworker.FuncWorker.notify'),
-                mock.patch('replugin.funcworker.FuncWorker.send')):
-            worker = funcworker.FuncWorker(
-                MQ_CONF,
-                logger=self.app_logger,
-                config_file=CONFIG_FILE,
-                output_dir='/tmp/logs/')
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
 
-            # Make the Func return data
-            # NOTE: this causes fc's call count to ++
-            fc().service.start.return_value = {
-                '127.0.0.1': 0,
-                '127.0.0.2': 1,
-            }
-
-            worker._on_open(self.connection)
-            worker._on_channel_open(self.channel)
-
-            body = {
-                'params': {
-                    'command': 'service',
-                    'subcommand': 'start',
-                    'service': 'test_service'
+                # Make the Func return data
+                # NOTE: this causes fc's call count to ++
+                fc_cmd = getattr(getattr(fc(), cmd), sub)
+                fc_cmd.return_value = {
+                    '127.0.0.1': 0,
+                    '127.0.0.2': 1,
                 }
-            }
 
-            # Execute the call
-            worker.process(
-                self.channel,
-                self.basic_deliver,
-                self.properties,
-                body,
-                self.logger)
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
 
-            self._assert_error_conditions(
-                worker, 'FuncWorker failed trying to execute service.start')
+                body = {
+                    'params': {
+                        'command': cmd,
+                        'subcommand': sub,
+                    }
+                }
+                for key in rargs:
+                    body['params'][key] = 'test_data'
+
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
+
+                self._assert_error_conditions(
+                    worker, 'FuncWorker failed trying to execute %s.%s' % (
+                        cmd, sub))
+            # Force reset
+            fc.reset_mock()
+            self._reset_mocks()

@@ -1,0 +1,7 @@
+{
+    "yumcmd": {
+        "install": ["package"],
+        "remove": ["package"],
+        "update": []
+    }
+}

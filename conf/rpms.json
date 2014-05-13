@@ -1,0 +1,6 @@
+{
+    "rpms": {
+        "inventory": ["flatten"],
+        "grep": ["pattern", "flatten"]
+    }
+}
