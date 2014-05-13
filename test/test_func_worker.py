@@ -24,6 +24,7 @@ from contextlib import nested
 from . import TestCase
 
 from replugin import funcworker
+
 from func.minion.codes import FuncException
 
 
@@ -230,6 +231,12 @@ class TestFuncWorker(TestCase):
                 config_file=CONFIG_FILE,
                 output_dir='/tmp/logs/')
 
+            # Make the Func return data
+            # NOTE: this causes fc's call count to ++
+            fc().service.start.return_value = {
+                '127.0.0.1': 0,
+            }
+
             worker._on_open(self.connection)
             worker._on_channel_open(self.channel)
 
@@ -263,7 +270,51 @@ class TestFuncWorker(TestCase):
             assert self.logger.info.call_count >= 1
 
             # Func should call to create the client
-            assert fc.call_count == 1
+            # Note: it's called one extra time for mocking
+            assert fc.call_count == 2
             # And the client should execute service.start
-            fc().service.start.assert_called_once_with(
-                service='test_service')
+            fc().service.start.assert_with(service='test_service')
+
+    def test_good_request_with_bad_response(self, fc):
+        """
+        Verify when a good request is received but func notes an issue
+        the proper result occurs.
+        """
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                logger=self.app_logger,
+                config_file=CONFIG_FILE,
+                output_dir='/tmp/logs/')
+
+            # Make the Func return data
+            # NOTE: this causes fc's call count to ++
+            fc().service.start.return_value = {
+                '127.0.0.1': 0,
+                '127.0.0.2': 1,
+            }
+
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
+
+            body = {
+                'params': {
+                    'command': 'service',
+                    'subcommand': 'start',
+                    'service': 'test_service'
+                }
+            }
+
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
+
+            self._assert_error_conditions(
+                worker, 'FuncWorker failed trying to execute service.start')

@@ -87,18 +87,30 @@ class FuncWorker(Worker):
 
                 target_params[required] = body['params'][required]
 
-            output.info('Executing func command ...')
-
             try:
-                client = fc.Client('127.0.0.1')
+                output.info('Executing func command ...')
+                # TODO: Revisit ... setting to async=False for now
+                client = fc.Client('127.0.0.1', noglobs=True, async=False)
                 target_callable = getattr(getattr(
                     client, params['command']), params['subcommand'])
-                target_callable(**target_params)
+
+                results = target_callable(**target_params)
+
+                # success set to False if anything returns non 0
+                success = True
+                # called is a nice repr of the command
+                called = '%s.%s(**%s)' % (
+                    params['command'], params['subcommand'], target_params)
+                for key, val in results.items():
+                    if val != 0:
+                        success = False
+                    output.info('%s returned %s for command %s' % (
+                        key, val, called))
             except FuncException, fex:
                 raise FuncWorkerError(str(fex))
 
             # Notify the final state based on the return code
-            if True:
+            if success:
                 self.send(
                     properties.reply_to,
                     corr_id,
@@ -109,13 +121,13 @@ class FuncWorker(Worker):
                 self.notify(
                     'FuncWorker Executed Successfully',
                     'FuncWorker successfully executed %s. See logs.' % (
-                        "PUT SOMETHING HELPFUL HERE"),
+                        called),
                     'completed',
                     corr_id)
             else:
                 raise FuncWorkerError(
                     'FuncWorker failed trying to execute %s. See logs.' % (
-                        "PUT SOMETHING HELPFUL HERE"))
+                        called))
         except FuncWorkerError, fwe:
             # If a FuncWorkerError happens send a failure, notify and log
             # the info for review.
