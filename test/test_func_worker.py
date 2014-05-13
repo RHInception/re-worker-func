@@ -19,6 +19,8 @@ Unittests.
 import pika
 import mock
 
+from contextlib import nested
+
 from . import TestCase
 
 from replugin import funcworker
@@ -76,141 +78,146 @@ class TestFuncWorker(TestCase):
         """
         Verify that if params are missing proper responses occur.
         """
-        with mock.patch('pika.SelectConnection'):
-            with mock.patch('replugin.funcworker.FuncWorker.notify'):
-                with mock.patch('replugin.funcworker.FuncWorker.send'):
-                    worker = funcworker.FuncWorker(
-                        MQ_CONF,
-                        config_file=CONFIG_FILE,
-                        output_dir='/tmp/logs/')
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                config_file=CONFIG_FILE,
+                output_dir='/tmp/logs/')
 
-                    worker._on_open(self.connection)
-                    worker._on_channel_open(self.channel)
-                    body = {}  # No info in the body -- so no params
-                    # Execute the call
-                    worker.process(
-                        self.channel,
-                        self.basic_deliver,
-                        self.properties,
-                        body,
-                        self.logger)
-                    self._assert_error_conditions(
-                        worker, 'Params dictionary not passed')
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
+            body = {}  # No info in the body -- so no params
+
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
+            self._assert_error_conditions(
+                worker, 'Params dictionary not passed')
 
     def test_command_whitelist(self, fc):
         """
         Verify that if a command that is not in the whitelist is attempted
         the worker fails properly.
         """
-        with mock.patch('pika.SelectConnection'):
-            with mock.patch('replugin.funcworker.FuncWorker.notify'):
-                with mock.patch('replugin.funcworker.FuncWorker.send'):
-                    worker = funcworker.FuncWorker(
-                        MQ_CONF,
-                        config_file=CONFIG_FILE,
-                        output_dir='/tmp/logs/')
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                config_file=CONFIG_FILE,
+                output_dir='/tmp/logs/')
 
-                    worker._on_open(self.connection)
-                    worker._on_channel_open(self.channel)
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
 
-                    body = {
-                        'params': {
-                            'command': 'NOTWHITELISTED',
-                        },
-                    }
+            body = {
+                'params': {
+                    'command': 'NOTWHITELISTED',
+                },
+            }
 
-                    # Execute the call
-                    worker.process(
-                        self.channel,
-                        self.basic_deliver,
-                        self.properties,
-                        body,
-                        self.logger)
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
 
-                    self._assert_error_conditions(
-                        worker, 'This worker only handles')
+            self._assert_error_conditions(
+                worker, 'This worker only handles')
 
     def test_subcommand_whitelist(self, fc):
         """
         Verify that if a subcommand that is not in the whitelist is attempted
         the worker fails properly.
         """
-        with mock.patch('pika.SelectConnection'):
-            with mock.patch('replugin.funcworker.FuncWorker.notify'):
-                with mock.patch('replugin.funcworker.FuncWorker.send'):
-                    worker = funcworker.FuncWorker(
-                        MQ_CONF,
-                        config_file=CONFIG_FILE,
-                        output_dir='/tmp/logs/')
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                config_file=CONFIG_FILE,
+                output_dir='/tmp/logs/')
 
-                    worker._on_open(self.connection)
-                    worker._on_channel_open(self.channel)
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
 
-                    body = {
-                        'params': {
-                            'command': 'service',
-                            'subcommand': 'UNKNOWNSUBCOMMAND',
-                        },
-                    }
+            body = {
+                'params': {
+                    'command': 'service',
+                    'subcommand': 'UNKNOWNSUBCOMMAND',
+                },
+            }
 
-                    # Execute the call
-                    worker.process(
-                        self.channel,
-                        self.basic_deliver,
-                        self.properties,
-                        body,
-                        self.logger)
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
 
-                    self._assert_error_conditions(
-                        worker, 'Requested subcommand for')
+            self._assert_error_conditions(
+                worker, 'Requested subcommand for')
 
     def test_good_request(self, fc):
         """
         Verify when a good request is received the worker executes as
         expected.
         """
-        with mock.patch('pika.SelectConnection'):
-            with mock.patch('replugin.funcworker.FuncWorker.notify'):
-                with mock.patch('replugin.funcworker.FuncWorker.send'):
-                    worker = funcworker.FuncWorker(
-                        MQ_CONF,
-                        config_file=CONFIG_FILE,
-                        output_dir='/tmp/logs/')
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                config_file=CONFIG_FILE,
+                output_dir='/tmp/logs/')
 
-                    worker._on_open(self.connection)
-                    worker._on_channel_open(self.channel)
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
 
-                    body = {
-                        'params': {
-                            'command': 'service',
-                            'subcommand': 'start',
-                            'service': 'test_service'
-                        }
-                    }
+            body = {
+                'params': {
+                    'command': 'service',
+                    'subcommand': 'start',
+                    'service': 'test_service'
+                }
+            }
 
-                    # Execute the call
-                    worker.process(
-                        self.channel,
-                        self.basic_deliver,
-                        self.properties,
-                        body,
-                        self.logger)
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
 
-                    assert worker.send.call_count == 2  # start then success
-                    assert worker.send.call_args[0][2] == {
-                        'status': 'completed',
-                    }
+            assert worker.send.call_count == 2  # start then success
+            assert worker.send.call_args[0][2] == {
+                'status': 'completed',
+            }
 
-                    # Notification should succeed
-                    assert worker.notify.call_count == 1
-                    expected = 'successfully executed'
-                    assert expected in worker.notify.call_args[0][1]
-                    assert worker.notify.call_args[0][2] == 'completed'
-                    # Log should happen as info at least once
-                    assert self.logger.info.call_count >= 1
+            # Notification should succeed
+            assert worker.notify.call_count == 1
+            expected = 'successfully executed'
+            assert expected in worker.notify.call_args[0][1]
+            assert worker.notify.call_args[0][2] == 'completed'
+            # Log should happen as info at least once
+            assert self.logger.info.call_count >= 1
 
-                    # Func should call to create the client
-                    assert fc.call_count == 1
-                    # And the client should execute service.start
-                    fc().service.start.assert_called_once_with(
-                        service='test_service')
+            # Func should call to create the client
+            assert fc.call_count == 1
+            # And the client should execute service.start
+            fc().service.start.assert_called_once_with(
+                service='test_service')
