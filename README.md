@@ -35,3 +35,36 @@ Example:
 **Note:** See
 [Func - Module List](https://fedorahosted.org/func/wiki/ModulesList)
 for more information.
+
+
+# Use as an Engine Step
+
+```json
+{
+    "project": "example project",
+    "ownership": {
+        "id": "Some team",
+        "contact": "someteam@example.com"
+    },
+    "steps": [
+        {
+            "name": "stop foo service",
+            "plugin": "funcworker",
+            "parameters": {
+                "service": {
+                    "stop": ["fooservice"],
+                }
+            },
+        },
+        {
+            "name": "foo",
+            "plugin": "funcworker",
+            "parameters": {
+                "yumcmd": {
+                    "install": ["re-client", "re-core", "quake2"],
+                }
+            }
+        }
+    ]
+}
+```

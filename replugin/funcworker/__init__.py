@@ -42,8 +42,8 @@ class FuncWorker(Worker):
         calls are allowed!
 
         `Params Required`:
-            * command: list of hosts to run the func command on.
-            * subcommand: What do do with the targeted command.
+            * command: name of the func module to run.
+            * subcommand: the module sub-command to run.
             * hosts: list of hosts to run the func command on.
             ....
         """
