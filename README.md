@@ -51,18 +51,18 @@ for more information.
             "name": "stop foo service",
             "plugin": "funcworker",
             "parameters": {
-                "service": {
-                    "stop": ["fooservice"],
-                }
-            },
+                "command": "service",
+                "subcommand": "stop",
+                "service": "megafrobber"
+            }
         },
         {
             "name": "foo",
             "plugin": "funcworker",
             "parameters": {
-                "yumcmd": {
-                    "install": ["re-client", "re-core", "quake2"],
-                }
+                "command": "yumcmd",
+                "subcommand": "install",
+                "package": "xemacs",
             }
         }
     ]
