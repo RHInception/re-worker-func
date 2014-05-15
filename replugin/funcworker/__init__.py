@@ -37,15 +37,20 @@ class FuncWorker(Worker):
     """
 
     def process(self, channel, basic_deliver, properties, body, output):
-        """
-        Executes remote func calls when requested. Only a configured
+        """Executes remote func calls when requested. Only configured
         calls are allowed!
 
         `Params Required`:
-            * command: list of hosts to run the func command on.
-            * subcommand: What do do with the targeted command.
+            * command: name of the func module to run.
+            * subcommand: the module sub-command to run.
+
+        TODO: actually pass in and use hosts. But I don't think this
+        will be part of the `params` item. Most likely another key
+        next to `params`:
+
             * hosts: list of hosts to run the func command on.
             ....
+
         """
         # Ack the original message
         self.ack(basic_deliver)
@@ -84,16 +89,25 @@ class FuncWorker(Worker):
                             params['subcommand'],
                             command_cfg[params['subcommand']],
                             required))
-
-                target_params.append(body['params'][required])
+                else:
+                    target_params.append(body['params'][required])
 
             try:
                 output.info('Executing func command ...')
-                # TODO: Revisit ... setting to async=False for now
+                # TODO: Revisit ... setting to async=False for now On
+                # taboot we use async and poll for completion. Also we
+                # allow host globbing.
                 client = fc.Client('127.0.0.1', noglobs=True, async=False)
-                target_callable = getattr(getattr(
-                    client, params['command']), params['subcommand'])
+                # Func syntax can be kind of weird, as all modules
+                # ("COMMAND") appear as attributes of the `client`
+                # object.
+                target_callable = getattr(
+                    getattr(client, params['command']), # Get the client.COMMAND attribute
+                    params['subcommand'])               # get the client.COMMAND.SUBCOMMAND method
 
+                output.debug('Invoking func method: "%s" with args: "%s"' % (
+                    str(target_callable), str(target_params)))
+                # Call the fc.Client.COMMAND.SUBCOMMAND method with the collected parameters
                 results = target_callable(*target_params)
 
                 # success set to False if anything returns non 0
