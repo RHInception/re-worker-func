@@ -35,3 +35,6 @@ Example:
 **Note:** See
 [Func - Module List](https://fedorahosted.org/func/wiki/ModulesList)
 for more information.
+
+**TODO**: Cut over to RTD when ready.
+For documentation see the [Read The Docs](http://release-engine.readthedocs.org/en/latest/workers/reworkerfunc.html) documentation.
