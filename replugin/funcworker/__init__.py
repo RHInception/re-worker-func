@@ -100,14 +100,17 @@ class FuncWorker(Worker):
                 client = fc.Client('127.0.0.1', noglobs=True, async=False)
                 # Func syntax can be kind of weird, as all modules
                 # ("COMMAND") appear as attributes of the `client`
-                # object.
+                # object ..
                 target_callable = getattr(
-                    getattr(client, params['command']),    # Get the client.COMMAND attribute
-                    params['subcommand'])                  # get the client.COMMAND.SUBCOMMAND method
+                    # First get the client.COMMAND attribute
+                    getattr(client, params['command']),
+                    # Next get the client.COMMAND.SUBCOMMAND method
+                    params['subcommand'])
 
                 output.debug('Invoking func method: "%s" with args: "%s"' % (
                     str(target_callable), str(target_params)))
-                # Call the fc.Client.COMMAND.SUBCOMMAND method with the collected parameters
+                # Call the fc.Client.COMMAND.SUBCOMMAND
+                # method with the collected parameters
                 results = target_callable(*target_params)
 
                 # success set to False if anything returns non 0
