@@ -22,6 +22,24 @@ from reworker.worker import Worker
 import func.overlord.client as fc
 
 from func.minion.codes import FuncException
+import func.CommonErrors
+
+
+def expand_globs(globs):
+    found_hosts = []
+    missing_hosts = []
+    for h in globs:
+        try:
+            c = fc.Client(h)
+            new_hosts = filter(lambda h: h not in found_hosts,
+                               c.list_minions())
+            found_hosts.extend(new_hosts)
+        except func.CommonErrors.Func_Client_Exception as e:
+            # Sure would be helpful if this exception told you exactly
+            # WHICH names bombed... buuuuut what can you do?
+            unmatched = e.value.split("\"")[1]
+            unmatched_globs.add(unmatched)
+    return (found_hosts, missing_hosts)
 
 
 class FuncWorkerError(Exception):
@@ -100,9 +118,17 @@ class FuncWorker(Worker):
                 # taboot we use async and poll for completion. Also we
                 # allow host globbing.
                 target_hosts = ",".join(params['hosts'])
+
+                (found, missing) = expand_globs(target_hosts)
+                self.app_logger.info("Found hosts: %s" % (
+                    found))
+                self.app_logger.info("Missing hosts: %s" % (
+                    missing))
+
                 self.app_logger.info('Executing %s.%s(%s) on %s' % (
                     params['command'], params['subcommand'],
                     target_params, target_hosts))
+
                 client = fc.Client(target_hosts, noglobs=True, async=False)
                 # Func syntax can be kind of weird, as all modules
                 # ("COMMAND") appear as attributes of the `client`
