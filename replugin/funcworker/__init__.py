@@ -162,11 +162,14 @@ class FuncWorker(Worker):
                     params['command'], params['subcommand'], target_params)
                 output.debug("Raw response: %s" % (
                     str(results)))
-                for key, val in results.iteritems():
-                    if val[0] != 0:
-                        success = False
+                # results is a list
+                # item 0 = return code
+                # item 1 = stdout
+                # item 2 = stderr
+                if results[0] != 0:
+                    success = False
                     output.info('%s returned %s for command %s' % (
-                        key, val, called))
+                        target_hosts, results[0], called))
 
             except FuncException, fex:
                 raise FuncWorkerError(str(fex))
