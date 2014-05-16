@@ -61,7 +61,7 @@ class FuncWorker(Worker):
 
         try:
             try:
-                params = body['params']
+                params = body['parameters']
             except KeyError:
                 raise FuncWorkerError(
                     'Params dictionary not passed to FuncWorker.'
@@ -81,7 +81,7 @@ class FuncWorker(Worker):
             target_params = []
             required_params = command_cfg[params['subcommand']]
             for required in required_params:
-                if required not in body['params'].keys():
+                if required not in params.keys():
                     raise FuncWorkerError(
                         'Command %s.%s requires the following params: %s. '
                         '%s was missing.' % (
@@ -90,7 +90,7 @@ class FuncWorker(Worker):
                             command_cfg[params['subcommand']],
                             required))
                 else:
-                    target_params.append(body['params'][required])
+                    target_params.append(params[required])
 
             try:
                 output.info('Executing func command ...')

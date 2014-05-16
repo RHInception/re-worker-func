@@ -154,7 +154,7 @@ class TestFuncWorker(TestCase):
                 worker._on_channel_open(self.channel)
 
                 body = {
-                    'params': {
+                    'parameters': {
                         'command': 'NOTWHITELISTED',
                     },
                 }
@@ -192,7 +192,7 @@ class TestFuncWorker(TestCase):
                 worker._on_channel_open(self.channel)
 
                 body = {
-                    'params': {
+                    'parameters': {
                         'command': cmd,
                         'subcommand': 'UNKNOWNSUBCOMMAND',
                     },
@@ -234,13 +234,13 @@ class TestFuncWorker(TestCase):
 
                 # Good data
                 body = {
-                    'params': {
+                    'parameters': {
                         'command': cmd,
                         'subcommand': sub,
                     },
                 }
                 for key in rargs:
-                    body['params'][key] = 'test_data'
+                    body['parameters'][key] = 'test_data'
 
                 # Execute the call
                 worker.process(
@@ -283,13 +283,13 @@ class TestFuncWorker(TestCase):
                 worker._on_channel_open(self.channel)
 
                 body = {
-                    'params': {
+                    'parameters': {
                         'command': cmd,
                         'subcommand': sub,
                     }
                 }
                 for key in rargs:
-                    body['params'][key] = 'test_data'
+                    body['parameters'][key] = 'test_data'
 
                 # Execute the call
                 worker.process(
@@ -353,13 +353,13 @@ class TestFuncWorker(TestCase):
                 worker._on_channel_open(self.channel)
 
                 body = {
-                    'params': {
+                    'parameters': {
                         'command': cmd,
                         'subcommand': sub,
                     }
                 }
                 for key in rargs:
-                    body['params'][key] = 'test_data'
+                    body['parameters'][key] = 'test_data'
 
                 # Execute the call
                 worker.process(
