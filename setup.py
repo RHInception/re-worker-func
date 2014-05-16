@@ -19,13 +19,15 @@ import sys
 
 from distutils.core import setup
 
-setup(name='funcworker',
-      version='0.0.1',
-      description='',
-      author='See AUTHORS file',
-      author_email='inception@redhat.com',
-      url='https://github.com/rhinception/re-worker-func',
-      license='AGPLv3',
-      package_dir={ 'replugin': 'replugin' },
-      packages=['replugin', 'replugin.funcworker']
+
+setup(
+    name='funcworker',
+    version='0.0.1',
+    description='',
+    author='See AUTHORS file',
+    author_email='inception@redhat.com',
+    url='https://github.com/rhinception/re-worker-func',
+    license='AGPLv3',
+    package_dir={'replugin': 'replugin'},
+    packages=['replugin', 'replugin.funcworker']
 )
