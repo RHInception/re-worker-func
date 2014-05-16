@@ -27,7 +27,7 @@ import func.CommonErrors
 
 def expand_globs(globs):
     found_hosts = []
-    missing_hosts = []
+    missing_hosts = set()
     for h in globs:
         try:
             c = fc.Client(h)
@@ -38,7 +38,7 @@ def expand_globs(globs):
             # Sure would be helpful if this exception told you exactly
             # WHICH names bombed... buuuuut what can you do?
             unmatched = e.value.split("\"")[1]
-            unmatched_globs.add(unmatched)
+            missing_hosts.add(unmatched)
     return (found_hosts, missing_hosts)
 
 
