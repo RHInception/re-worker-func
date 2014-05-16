@@ -355,7 +355,8 @@ class TestFuncWorker(TestCase):
 
                 # Func should call to create the client
                 # Note: it's called one extra time for mocking
-                assert fc.call_count == 2
+                # Note: it's called another extra time for glob verification
+                assert fc.call_count == 3
                 assert fc.call_args[0][0] == '127.0.0.1'
                 # And the client should execute expected calls
                 assert target.call_count == 1

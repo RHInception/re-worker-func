@@ -25,10 +25,12 @@ from func.minion.codes import FuncException
 import func.CommonErrors
 
 
-def expand_globs(globs):
+def expand_globs(globs, app_logger):
     found_hosts = []
     missing_hosts = set()
     for h in globs:
+        app_logger.debug("Expanding glob (looking up host): %s" % (
+            h))
         try:
             c = fc.Client(h)
             new_hosts = filter(lambda h: h not in found_hosts,
@@ -39,7 +41,7 @@ def expand_globs(globs):
             # WHICH names bombed... buuuuut what can you do?
             unmatched = e.value.split("\"")[1]
             missing_hosts.add(unmatched)
-    return (found_hosts, missing_hosts)
+    return (found_hosts, list(missing_hosts))
 
 
 class FuncWorkerError(Exception):
@@ -118,12 +120,21 @@ class FuncWorker(Worker):
                 # taboot we use async and poll for completion. Also we
                 # allow host globbing.
                 target_hosts = ",".join(params['hosts'])
+                (found, missing) = expand_globs(params['hosts'], self.app_logger)
 
-                (found, missing) = expand_globs(target_hosts)
                 self.app_logger.info("Found hosts: %s" % (
                     found))
                 self.app_logger.info("Missing hosts: %s" % (
                     missing))
+
+                if len(missing) > 0:
+                    self.send(
+                        properties.reply_to, corr_id, {
+                            'status': 'errored',
+                            'data': 'Hosts not discoverable: %s' % (
+                                str(missing))
+                        }, exchange='')
+                    return False
 
                 self.app_logger.info('Executing %s.%s(%s) on %s' % (
                     params['command'], params['subcommand'],
