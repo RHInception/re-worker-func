@@ -314,7 +314,11 @@ class TestFuncWorker(TestCase):
                 # Make the Func return data
                 # NOTE: this causes fc's call count to ++
                 results = {
-                    '127.0.0.1': 0,
+                    "127.0.0.1": [
+                        0,
+                        "stdout here",
+                        "stderr here"
+                    ]
                 }
 
                 target = getattr(getattr(fc(), cmd), sub)
@@ -341,6 +345,7 @@ class TestFuncWorker(TestCase):
                     self.logger)
 
                 assert worker.send.call_count == 2  # start then success
+                print worker.send.call_args[0][2]
                 assert worker.send.call_args[0][2] == {
                     'status': 'completed', 'data': results,
                 }
@@ -387,8 +392,16 @@ class TestFuncWorker(TestCase):
                 # NOTE: this causes fc's call count to ++
                 fc_cmd = getattr(getattr(fc(), cmd), sub)
                 fc_cmd.return_value = {
-                    '127.0.0.1': 0,
-                    '127.0.0.2': 1,
+                    "127.0.0.1": [
+                        0,
+                        "stdout here",
+                        "stderr here"
+                    ],
+                    '127.0.0.2': [
+                        1,
+                        "stdout here",
+                        "stderr here"
+                    ]
                 }
 
                 worker._on_open(self.connection)

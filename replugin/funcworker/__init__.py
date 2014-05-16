@@ -155,14 +155,17 @@ class FuncWorker(Worker):
                 # Call the fc.Client.COMMAND.SUBCOMMAND
                 # method with the collected parameters
                 results = target_callable(*target_params)
-
                 # success set to False if anything returns non 0
                 success = True
                 # called is a nice repr of the command
                 called = '%s.%s(*%s)' % (
                     params['command'], params['subcommand'], target_params)
+                print '>>results>>'
+                print results
+                print '<<results<<'
                 for key, val in results.items():
-                    if val != 0:
+                    print "> %s" % val
+                    if val[0] != 0:
                         success = False
                     output.info('%s returned %s for command %s' % (
                         key, val, called))
@@ -172,6 +175,7 @@ class FuncWorker(Worker):
 
             # Notify the final state based on the return code
             if success:
+                print "it was a success"
                 self.app_logger.info('Success for %s.%s(%s) on %s' % (
                     params['command'], params['subcommand'],
                     target_params, target_hosts))
@@ -189,6 +193,7 @@ class FuncWorker(Worker):
                     'completed',
                     corr_id)
             else:
+                print "it was FAILURE"
                 raise FuncWorkerError(
                     'FuncWorker failed trying to execute %s. See logs.' % (
                         called))
