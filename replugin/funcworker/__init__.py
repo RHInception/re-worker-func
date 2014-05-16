@@ -160,11 +160,9 @@ class FuncWorker(Worker):
                 # called is a nice repr of the command
                 called = '%s.%s(*%s)' % (
                     params['command'], params['subcommand'], target_params)
-                print '>>results>>'
-                print results
-                print '<<results<<'
-                for key, val in results.items():
-                    print "> %s" % val
+                output.debug("Raw response: %s" % (
+                    str(results)))
+                for key, val in results.iteritems():
                     if val[0] != 0:
                         success = False
                     output.info('%s returned %s for command %s' % (
