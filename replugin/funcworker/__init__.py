@@ -124,8 +124,9 @@ class FuncWorker(Worker):
 
                 self.app_logger.debug("Found hosts: %s" % (
                     found))
-                self.app_logger.warning("Missing hosts: %s" % (
-                    missing))
+                if missing:
+                    self.app_logger.warning("Missing hosts: %s" % (
+                        missing))
 
                 if len(missing) > 0:
                     self.send(
