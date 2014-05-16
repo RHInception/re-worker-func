@@ -122,9 +122,9 @@ class FuncWorker(Worker):
                 target_hosts = ",".join(params['hosts'])
                 (found, missing) = expand_globs(params['hosts'], self.app_logger)
 
-                self.app_logger.info("Found hosts: %s" % (
+                self.app_logger.debug("Found hosts: %s" % (
                     found))
-                self.app_logger.info("Missing hosts: %s" % (
+                self.app_logger.warning("Missing hosts: %s" % (
                     missing))
 
                 if len(missing) > 0:
@@ -176,7 +176,6 @@ class FuncWorker(Worker):
 
             # Notify the final state based on the return code
             if success:
-                print "it was a success"
                 self.app_logger.info('Success for %s.%s(%s) on %s' % (
                     params['command'], params['subcommand'],
                     target_params, target_hosts))
@@ -194,7 +193,6 @@ class FuncWorker(Worker):
                     'completed',
                     corr_id)
             else:
-                print "it was FAILURE"
                 raise FuncWorkerError(
                     'FuncWorker failed trying to execute %s. See logs.' % (
                         called))
