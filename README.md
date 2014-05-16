@@ -10,16 +10,52 @@ Run ``make tests`` from the main directory to execute unittests
 [pyflakes](https://pypi.python.org/pypi/pyflakes))
 
 ## Configuration
-The configuration file uses the following pattern in JSON format:
+The configuration file uses the following pattern in JSON format.
 
-```
+```json
 {
-    "FUNC_MODULE": {
-        "COMMAND_1": ["REQUIRED", "PARAMETERS"],
-        "COMMAND_2": ["ONE_ITEM"],
-        "COMMAND_N": []
-    }
+    "FUNC_MODULE.METHOD": ["NAMES_OF", "REQUIRED", "PARAMETERS"],
+}
 ```
+
+### Method with One Parameter
+
+This demonstrates a **funcworker** configured to run a func module
+method which requires one parameter:
+
+```json
+# conf/example.json
+{
+    "command.run": ["command"]
+}
+```
+
+The ``example.json`` configuration (above) defines the behavior of a
+**funcworker** which runs the **command** module's ``run`` task. The
+task requires one argument, ``command`` (as noted in the square
+brackets, above).
+
+When used as a step in a playbook, the parameter name described above
+is used to supply arguments to the actual func method call. Example of
+the above snippet, used in a playbook:
+
+```json
+    // ...
+    "steps": [
+        {
+            "name": "Example step",
+            "plugin": "funcworker",
+            "parameters": {
+                "method": "command.run",
+                "command": "touch /tmp/foo"
+            }
+        }
+    ],
+    // ...
+```
+
+
+
 
 Example:
 ```
