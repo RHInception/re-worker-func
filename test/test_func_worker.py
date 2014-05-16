@@ -212,6 +212,45 @@ class TestFuncWorker(TestCase):
             # Force reset
             self._reset_mocks()
 
+    def test_missing_hosts(self, fc):
+        """
+        Verify that if no hosts variablr is passed we fail as expected.
+        """
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
+
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
+
+                body = {
+                    'parameters': {
+                        'command': cmd,
+                        'subcommand': sub,
+                    },
+                }
+
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
+
+                self._assert_error_conditions(
+                    worker, 'This worker requires hosts to be a list of hosts')
+
+            # Force reset
+            self._reset_mocks()
+
     def test_func_client_error(self, fc):
         """
         Check that func errors fail properly.
@@ -237,6 +276,7 @@ class TestFuncWorker(TestCase):
                     'parameters': {
                         'command': cmd,
                         'subcommand': sub,
+                        'hosts': ['127.0.0.1']
                     },
                 }
                 for key in rargs:
@@ -286,6 +326,7 @@ class TestFuncWorker(TestCase):
                     'parameters': {
                         'command': cmd,
                         'subcommand': sub,
+                        'hosts': ['127.0.0.1']
                     }
                 }
                 for key in rargs:
@@ -300,7 +341,6 @@ class TestFuncWorker(TestCase):
                     self.logger)
 
                 assert worker.send.call_count == 2  # start then success
-                print worker.send.call_args
                 assert worker.send.call_args[0][2] == {
                     'status': 'completed', 'data': results,
                 }
@@ -316,6 +356,7 @@ class TestFuncWorker(TestCase):
                 # Func should call to create the client
                 # Note: it's called one extra time for mocking
                 assert fc.call_count == 2
+                assert fc.call_args[0][0] == '127.0.0.1'
                 # And the client should execute expected calls
                 assert target.call_count == 1
                 target.assert_called_with(*[
@@ -356,6 +397,7 @@ class TestFuncWorker(TestCase):
                     'parameters': {
                         'command': cmd,
                         'subcommand': sub,
+                        'hosts': ['127.0.0.1']
                     }
                 }
                 for key in rargs:

@@ -43,11 +43,6 @@ class FuncWorker(Worker):
         `Params Required`:
             * command: name of the func module to run.
             * subcommand: the module sub-command to run.
-
-        TODO: actually pass in and use hosts. But I don't think this
-        will be part of the `params` item. Most likely another key
-        next to `params`:
-
             * hosts: list of hosts to run the func command on.
             ....
 
@@ -70,14 +65,21 @@ class FuncWorker(Worker):
             if params['command'] not in self._config.keys():
                 raise FuncWorkerError(
                     'This worker only handles: %s' % self._config.keys())
+
             command_cfg = self._config[params['command']]
 
+            # Next verify there is a subcommand
             if params['subcommand'] not in command_cfg.keys():
                 raise FuncWorkerError(
                     'Requested subcommand for %s is not supported '
                     'by this worker' % params['command'])
 
-            # Next verify we have what we need (and make our target_params too)
+            # Then check we have hosts to use
+            if 'hosts' not in params.keys() or type(params['hosts']) != list:
+                raise FuncWorkerError(
+                    'This worker requires hosts to be a list of hosts.')
+
+            # Now verify we have what we need (and make our target_params too)
             target_params = []
             required_params = command_cfg[params['subcommand']]
             for required in required_params:
@@ -97,7 +99,11 @@ class FuncWorker(Worker):
                 # TODO: Revisit ... setting to async=False for now On
                 # taboot we use async and poll for completion. Also we
                 # allow host globbing.
-                client = fc.Client('127.0.0.1', noglobs=True, async=False)
+                target_hosts = ",".join(params['hosts'])
+                self.app_logger.info('Executing %s.%s(%s) on %s' % (
+                    params['command'], params['subcommand'],
+                    target_params, target_hosts))
+                client = fc.Client(target_hosts, noglobs=True, async=False)
                 # Func syntax can be kind of weird, as all modules
                 # ("COMMAND") appear as attributes of the `client`
                 # object ..
@@ -129,6 +135,9 @@ class FuncWorker(Worker):
 
             # Notify the final state based on the return code
             if success:
+                self.app_logger.info('Success for %s.%s(%s) on %s' % (
+                    params['command'], params['subcommand'],
+                    target_params, target_hosts))
                 self.send(
                     properties.reply_to,
                     corr_id,
@@ -149,6 +158,8 @@ class FuncWorker(Worker):
         except FuncWorkerError, fwe:
             # If a FuncWorkerError happens send a failure, notify and log
             # the info for review.
+            self.app_logger.error('Failure: %s' % fwe)
+
             self.send(
                 properties.reply_to,
                 corr_id,

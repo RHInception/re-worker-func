@@ -60,7 +60,8 @@ configured with the ``yumcmd`` command.
             "parameters": {
                 "command": "service",
                 "subcommand": "stop",
-                "service": "megafrobber"
+                "service": "megafrobber",
+                "hosts": ["127.0.0.1"]
             }
         },
         {
@@ -70,6 +71,7 @@ configured with the ``yumcmd`` command.
                 "command": "yumcmd",
                 "subcommand": "install",
                 "package": "xemacs",
+                "hosts": ["127.0.0.1"]
             }
         }
     ]
