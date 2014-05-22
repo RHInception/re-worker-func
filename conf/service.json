@@ -1,4 +1,5 @@
 {
+    "queue": "funcservice",
     "service": {
         "stop": ["service"],
         "start": ["service"],

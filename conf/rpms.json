@@ -1,4 +1,5 @@
 {
+    "queue": "funcrpm",
     "rpms": {
         "inventory": ["flatten"],
         "grep": ["pattern", "flatten"]

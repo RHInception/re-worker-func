@@ -1,4 +1,5 @@
 {
+    "queue": "funccommand",
     "command": {
         "run": ["cmd"]
     }
