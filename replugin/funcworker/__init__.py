@@ -216,7 +216,7 @@ class FuncWorker(Worker):
             output.error(str(fwe))
 
 
-if __name__ == '__main__':
+def main():  # pragma: no cover
     mq_conf = {
         'server': '127.0.0.1',
         'port': 5672,
@@ -229,3 +229,7 @@ if __name__ == '__main__':
         config_file='conf/example.json',
         output_dir='/tmp/logs/')
     worker.run_forever()
+
+
+if __name__ == '__main__':  # pragma: no cover
+    main()

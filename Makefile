@@ -22,7 +22,7 @@
 ########################################################
 NAME := re-worker-func
 
-RPMSPECDIR := .
+RPMSPECDIR := ./contrib/rpm/
 RPMSPEC := $(RPMSPECDIR)/re-worker-func.spec
 
 SRCDIR := replugin/funcworker
@@ -58,32 +58,32 @@ pyflakes:
 	@echo "#############################################"
 	-pyflakes $(SRCDIR)
 
-# rpmcommon: sdist
-# 	@mkdir -p rpm-build
-# 	@cp dist/*.gz rpm-build/
+rpmcommon: sdist
+	@mkdir -p rpm-build
+	@cp dist/*.gz rpm-build/
 
-# srpm: rpmcommon
-# 	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
-# 	--define "_builddir %{_topdir}" \
-# 	--define "_rpmdir %{_topdir}" \
-# 	--define "_srcrpmdir %{_topdir}" \
-# 	--define "_specdir $(RPMSPECDIR)" \
-# 	--define "_sourcedir %{_topdir}" \
-# 	-bs $(RPMSPEC)
-# 	@echo "#############################################"
-# 	@echo "$(NAME) SRPM is built:"
-# 	@find rpm-build -maxdepth 2 -name '$(NAME)*src.rpm' | awk '{print "    " $$1}'
-# 	@echo "#############################################"
+srpm: rpmcommon
+	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
+	--define "_builddir %{_topdir}" \
+	--define "_rpmdir %{_topdir}" \
+	--define "_srcrpmdir %{_topdir}" \
+	--define "_specdir $(RPMSPECDIR)" \
+	--define "_sourcedir %{_topdir}" \
+	-bs $(RPMSPEC)
+	@echo "#############################################"
+	@echo "$(NAME) SRPM is built:"
+	@find rpm-build -maxdepth 2 -name '$(NAME)*src.rpm' | awk '{print "    " $$1}'
+	@echo "#############################################"
 
-# rpm: rpmcommon
-# 	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
-# 	--define "_builddir %{_topdir}" \
-# 	--define "_rpmdir %{_topdir}" \
-# 	--define "_srcrpmdir %{_topdir}" \
-# 	--define "_specdir $(RPMSPECDIR)" \
-# 	--define "_sourcedir %{_topdir}" \
-# 	-ba $(RPMSPEC)
-# 	@echo "#############################################"
-# 	@echo "$(NAME) RPMs are built:"
-# 	@find rpm-build -maxdepth 2 -name '$(NAME)*.rpm' | awk '{print "    " $$1}'
-# 	@echo "#############################################"
+rpm: rpmcommon
+	@rpmbuild --define "_topdir %(pwd)/rpm-build" \
+	--define "_builddir %{_topdir}" \
+	--define "_rpmdir %{_topdir}" \
+	--define "_srcrpmdir %{_topdir}" \
+	--define "_specdir $(RPMSPECDIR)" \
+	--define "_sourcedir %{_topdir}" \
+	-ba $(RPMSPEC)
+	@echo "#############################################"
+	@echo "$(NAME) RPMs are built:"
+	@find rpm-build -maxdepth 2 -name '$(NAME)*.rpm' | awk '{print "    " $$1}'
+	@echo "#############################################"
