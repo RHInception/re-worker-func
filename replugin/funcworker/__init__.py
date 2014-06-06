@@ -120,7 +120,8 @@ class FuncWorker(Worker):
                 # taboot we use async and poll for completion. Also we
                 # allow host globbing.
                 target_hosts = ",".join(params['hosts'])
-                (found, missing) = expand_globs(params['hosts'], self.app_logger)
+                (found, missing) = expand_globs(
+                    params['hosts'], self.app_logger)
 
                 self.app_logger.debug("Found hosts: %s" % (
                     found))

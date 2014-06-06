@@ -1,0 +1,28 @@
+{
+    "queue": "nagios",
+    "nagios": {
+        "schedule_svc_downtime": ["hostname", "services", "minutes"],
+        "schedule_host_downtime": ["hostname", "minutes"],
+        "schedule_host_and_svc_downtime": ["host", "minutes"],
+        "schedule_hostgroup_host_downtime": ["hostgroup", "minutes"],
+        "schedule_hostgroup_svc_downtime": ["hostgroup", "minutes"],
+        "schedule_servicegroup_host_downtime": ["servicegroup", "minutes"],
+        "schedule_servicegroup_svc_downtime": ["servicegroup", "minutes"],
+        "disable_host_svc_notifications": ["hostname"],
+        "disable_host_notifications": ["hostname"],
+        "disable_svc_notifications": ["hostname", "services"],
+        "disable_servicegroup_host_notifications": ["servicegroup"],
+        "disable_servicegroup_svc_notifications": ["servicegroup"],
+        "disable_hostgroup_host_notifications": ["hostgroup"],
+        "disable_hostgroup_svc_notifications": ["hostgroup"],
+        "enable_host_notifications": ["hostname"],
+        "enable_host_svc_notifications": ["hostname"],
+        "enable_svc_notifications": ["hostname", "services"],
+        "enable_hostgroup_host_notifications": ["hostgroup"],
+        "enable_hostgroup_svc_notifications": ["hostgroup"],
+        "enable_servicegroup_host_notifications": ["servicegroup"],
+        "enable_servicegroup_svc_notifications": ["servicegroup"],
+        "silence_host": ["hostname"],
+        "unsilence_host": ["hostname"]
+    }
+}

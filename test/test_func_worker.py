@@ -39,7 +39,9 @@ MQ_CONF = {
 CONFIG_FILES = (
     # FILENAME            COMMAND    SUBCMD   REQUIRED ARGS
     ('conf/service.json', 'service', 'start', ['service']),
-    ('conf/yumcmd.json', 'yumcmd', 'update', [])
+    ('conf/yumcmd.json', 'yumcmd', 'update', []),
+    ('conf/nagios.json', 'nagios',
+     'schedule_svc_downtime', ["hostname", "services", "minutes"]),
 )
 
 
