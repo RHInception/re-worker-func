@@ -1,5 +1,5 @@
 {
-    "queue": "nagios",
+    "queue": "funcnagios",
     "nagios": {
         "schedule_svc_downtime": ["hostname", "services", "minutes"],
         "schedule_host_downtime": ["hostname", "minutes"],
