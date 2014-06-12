@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.0.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -19,7 +19,7 @@ Url: https://github.com/rhinception/re-worker-func
 
 BuildArch: noarch
 BuildRequires: python2-devel, python-setuptools
-Requires: func, re-worker
+Requires: func, re-worker, python-setuptools
 
 %description
 Release Engine Worker to run commands over Func.
@@ -38,6 +38,9 @@ Release Engine Worker to run commands over Func.
 %dir %{python2_sitelib}/%{_pkg_name}
 
 %changelog
+* Thu Jun 12 2014 Steve Milner <stevem@gnulinux.et> - 0.0.1-3
+- python-setuptools is required.
+
 * Mon Jun  9 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.1-2
 - Fix dep on reworker to re-worker
 

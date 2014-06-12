@@ -218,18 +218,8 @@ class FuncWorker(Worker):
 
 
 def main():  # pragma: no cover
-    mq_conf = {
-        'server': '127.0.0.1',
-        'port': 5672,
-        'vhost': '/',
-        'user': 'guest',
-        'password': 'guest',
-    }
-    worker = FuncWorker(
-        mq_conf,
-        config_file='conf/example.json',
-        output_dir='/tmp/logs/')
-    worker.run_forever()
+    from reworker.worker import runner
+    runner(FuncWorker)
 
 
 if __name__ == '__main__':  # pragma: no cover
