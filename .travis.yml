@@ -8,7 +8,7 @@ install:
     - "(wget https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && python setup.py install) || /bin/true"
     - "(wget https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz  && tar xvzf certmaster-0.28.tar.gz && cd certmaster-0.28 && python setup.py install) || /bin/true"
 script:
-    - "pep8 --ignore=E501 replugin/"
+    - "make pep8"
     - "nosetests -v --with-cover --cover-min-percentage=80 --cover-package=replugin test/"
 notifications:
     email: false
