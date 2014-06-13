@@ -424,3 +424,328 @@ class TestFuncWorker(TestCase):
             # Force reset
             fc.reset_mock()
             self._reset_mocks()
+
+    def test_good_with_eventually_working_check_script(self, fc):
+        """
+        When test scripts return non 0 tries should execute.
+        """
+        # Set up the mock so the first call returns 1 and the second returns 0
+        fc_mock = fc().command.run().__getitem__
+
+        def decrement(*args):
+            def second_call(*args):
+                return 0
+            fc_mock.side_effect = second_call
+            return 1
+
+        fc_mock.side_effect = decrement
+
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send'),
+                    mock.patch('replugin.funcworker.sleep')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
+
+                # Make the Func return data
+                # NOTE: this causes fc's call count to ++
+                results = [
+                    0,
+                    "stdout here",
+                    "stderr here"
+                ]
+
+                target = getattr(getattr(fc(), cmd), sub)
+                target.return_value = results
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
+
+                body = {
+                    'parameters': {
+                        'command': cmd,
+                        'subcommand': sub,
+                        'hosts': ['127.0.0.1'],
+                        'tries': 2,
+                        'check_scripts': ['eventuallyworks'],
+                    }
+                }
+                for key in rargs:
+                    body['parameters'][key] = 'test_data'
+
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
+
+                assert worker.send.call_count == 2  # start then success
+                assert worker.send.call_args[0][2] == {
+                    'status': 'completed', 'data': results,
+                }
+
+                # Notification should succeed
+                assert worker.notify.call_count == 1
+                expected = 'successfully executed'
+                assert expected in worker.notify.call_args[0][1]
+                assert worker.notify.call_args[0][2] == 'completed'
+                # Log should happen as info at least once
+                assert self.logger.info.call_count >= 1
+
+                # No sleeping should have occured as the check script
+                # returned 0 or wasn't provided
+                assert funcworker.sleep.call_count == 0
+
+                assert fc.call_args[0][0] == '127.0.0.1'
+                # And the client should execute expected calls
+                assert target.call_count == 2
+                target.assert_called_with(*[
+                    'test_data' for x in range(len(rargs))])
+
+            # Force reset
+            fc.reset_mock()
+            self._reset_mocks()
+
+    def test_good_with_check_failing_scripts(self, fc):
+        """
+        When test scripts are given they should be executed.
+        """
+        fc().command.run().__getitem__.return_value = 1
+
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send'),
+                    mock.patch('replugin.funcworker.sleep')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
+
+                # Make the Func return data
+                # NOTE: this causes fc's call count to ++
+                results = [
+                    0,
+                    "stdout here",
+                    "stderr here"
+                ]
+
+                target = getattr(getattr(fc(), cmd), sub)
+                target.return_value = results
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
+
+                body = {
+                    'parameters': {
+                        'command': cmd,
+                        'subcommand': sub,
+                        'hosts': ['127.0.0.1'],
+                        'tries': 2,
+                        'check_scripts': ['failingcheckscript'],
+                    }
+                }
+                for key in rargs:
+                    body['parameters'][key] = 'test_data'
+
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
+
+                assert worker.send.call_count == 2  # start then success
+                print worker.send.call_args[0][2]
+                assert worker.send.call_args[0][2] == {
+                    'status': 'completed', 'data': results,
+                }
+
+                # Notification should succeed
+                assert worker.notify.call_count == 1
+                expected = 'successfully executed'
+                assert expected in worker.notify.call_args[0][1]
+                assert worker.notify.call_args[0][2] == 'completed'
+                # Log should happen as info at least once
+                assert self.logger.info.call_count >= 1
+
+                # No sleeping should have occured as the check script
+                # returned 0 or wasn't provided
+                assert funcworker.sleep.call_count == 2
+
+                assert fc.call_args[0][0] == '127.0.0.1'
+                # And the client should execute expected calls
+                assert target.call_count == 2
+                target.assert_called_with(*[
+                    'test_data' for x in range(len(rargs))])
+
+            # Force reset
+            fc.reset_mock()
+            self._reset_mocks()
+
+    def test_good_with_check_scripts(self, fc):
+        """
+        When test scripts are given they should be executed.
+        """
+        fc().command.run().__getitem__.return_value = 0
+
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            for check_scripts in ([], ['fakescript']):
+                with nested(
+                        mock.patch('pika.SelectConnection'),
+                        mock.patch('replugin.funcworker.FuncWorker.notify'),
+                        mock.patch('replugin.funcworker.FuncWorker.send'),
+                        mock.patch('replugin.funcworker.sleep')):
+                    worker = funcworker.FuncWorker(
+                        MQ_CONF,
+                        logger=self.app_logger,
+                        config_file=config_file,
+                        output_dir='/tmp/logs/')
+
+                    # Make the Func return data
+                    # NOTE: this causes fc's call count to ++
+                    results = [
+                        0,
+                        "stdout here",
+                        "stderr here"
+                    ]
+
+                    target = getattr(getattr(fc(), cmd), sub)
+                    target.return_value = results
+                    worker._on_open(self.connection)
+                    worker._on_channel_open(self.channel)
+
+                    body = {
+                        'parameters': {
+                            'command': cmd,
+                            'subcommand': sub,
+                            'hosts': ['127.0.0.1'],
+                            'tries': 2,
+                            'check_scripts': check_scripts,
+                        }
+                    }
+                    for key in rargs:
+                        body['parameters'][key] = 'test_data'
+
+                    # Execute the call
+                    worker.process(
+                        self.channel,
+                        self.basic_deliver,
+                        self.properties,
+                        body,
+                        self.logger)
+
+                    assert worker.send.call_count == 2  # start then success
+                    print worker.send.call_args[0][2]
+                    assert worker.send.call_args[0][2] == {
+                        'status': 'completed', 'data': results,
+                    }
+
+                    # Notification should succeed
+                    assert worker.notify.call_count == 1
+                    expected = 'successfully executed'
+                    assert expected in worker.notify.call_args[0][1]
+                    assert worker.notify.call_args[0][2] == 'completed'
+                    # Log should happen as info at least once
+                    assert self.logger.info.call_count >= 1
+
+                    # No sleeping should have occured as the check script
+                    # returned 0 or wasn't provided
+                    assert funcworker.sleep.call_count == 0
+
+                    assert fc.call_args[0][0] == '127.0.0.1'
+                    # And the client should execute expected calls
+                    assert target.call_count == (1 + len(check_scripts))
+                    target.assert_called_with(*[
+                        'test_data' for x in range(len(rargs))])
+
+                # Force reset
+                fc.reset_mock()
+                self._reset_mocks()
+
+    def test_good_with_check_failing_scripts(self, fc):
+        """
+        When test scripts are given they should be executed.
+        """
+        fc().command.run().__getitem__.return_value = 1
+
+        for config_file, cmd, sub, rargs in CONFIG_FILES:
+            with nested(
+                    mock.patch('pika.SelectConnection'),
+                    mock.patch('replugin.funcworker.FuncWorker.notify'),
+                    mock.patch('replugin.funcworker.FuncWorker.send'),
+                    mock.patch('replugin.funcworker.sleep')):
+                worker = funcworker.FuncWorker(
+                    MQ_CONF,
+                    logger=self.app_logger,
+                    config_file=config_file,
+                    output_dir='/tmp/logs/')
+
+                # Make the Func return data
+                # NOTE: this causes fc's call count to ++
+                results = [
+                    0,
+                    "stdout here",
+                    "stderr here"
+                ]
+
+                target = getattr(getattr(fc(), cmd), sub)
+                target.return_value = results
+                worker._on_open(self.connection)
+                worker._on_channel_open(self.channel)
+
+                body = {
+                    'parameters': {
+                        'command': cmd,
+                        'subcommand': sub,
+                        'hosts': ['127.0.0.1'],
+                        'tries': 2,
+                        'check_scripts': ['failingcheckscript'],
+                    }
+                }
+                for key in rargs:
+                    body['parameters'][key] = 'test_data'
+
+                # Execute the call
+                worker.process(
+                    self.channel,
+                    self.basic_deliver,
+                    self.properties,
+                    body,
+                    self.logger)
+
+                assert worker.send.call_count == 2  # start then success
+                print worker.send.call_args[0][2]
+                assert worker.send.call_args[0][2] == {
+                    'status': 'failed',
+                }
+
+                # Notification should succeed
+                assert worker.notify.call_count == 1
+                expected = 'failed trying to execute'
+                assert expected in worker.notify.call_args[0][1]
+                assert worker.notify.call_args[0][2] == 'failed'
+                # Log should happen as info at least once
+                assert self.logger.info.call_count >= 1
+
+                # No sleeping should have occured as the check script
+                # returned 0 or wasn't provided
+                assert funcworker.sleep.call_count == 2
+
+                assert fc.call_args[0][0] == '127.0.0.1'
+                # And the client should execute expected calls
+                assert target.call_count == 2
+                target.assert_called_with(*[
+                    'test_data' for x in range(len(rargs))])
+
+            # Force reset
+            fc.reset_mock()
+            self._reset_mocks()

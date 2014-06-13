@@ -17,6 +17,8 @@
 Simple Func worker.
 """
 
+from time import sleep
+
 from reworker.worker import Worker
 
 import func.overlord.client as fc
@@ -66,6 +68,11 @@ class FuncWorker(Worker):
             * hosts: list of hosts to run the func command on.
             ....
 
+        `Optional Params`:
+           * tries: the amount of times executing and getting success
+                    from check scripts
+           * check_scripts: list of check scripts to execute which
+                            verify success
         """
         # Ack the original message
         self.ack(basic_deliver)
@@ -98,6 +105,9 @@ class FuncWorker(Worker):
             if 'hosts' not in params.keys() or type(params['hosts']) != list:
                 raise FuncWorkerError(
                     'This worker requires hosts to be a list of hosts.')
+            # Get tries/check_scripts or set defaults
+            _tries = int(params.get('tries', 1))
+            _check_scripts = params.get('check_scripts', [])
 
             # Now verify we have what we need (and make our target_params too)
             target_params = []
@@ -152,27 +162,64 @@ class FuncWorker(Worker):
                     # Next get the client.COMMAND.SUBCOMMAND method
                     params['subcommand'])
 
-                output.debug('Invoking func method: "%s" with args: "%s"' % (
-                    str(target_callable), str(target_params)))
-                # Call the fc.Client.COMMAND.SUBCOMMAND
-                # method with the collected parameters
-                results = target_callable(*target_params)
-                # success set to False if anything returns non 0
-                success = True
-                # called is a nice repr of the command
-                called = '%s.%s(*%s)' % (
-                    params['command'], params['subcommand'], target_params)
-                output.debug("Raw response: %s" % (
-                    str(results)))
-                # results is a list
-                # item 0 = return code
-                # item 1 = stdout
-                # item 2 = stderr
-                if results[0] != 0:
-                    success = False
-                    output.info('%s returned %s for command %s' % (
-                        target_hosts, results[0], called))
+                for attempt_count in range(_tries):
+                    output.debug(
+                        'Invoking func method: "%s" with args: "%s"' % (
+                            str(target_callable), str(target_params)))
+                    # Call the fc.Client.COMMAND.SUBCOMMAND
+                    # method with the collected parameters
+                    results = target_callable(*target_params)
+                    # success set to False if anything returns non 0
+                    success = True
+                    # called is a nice repr of the command
+                    called = '%s.%s(*%s)' % (
+                        params['command'], params['subcommand'], target_params)
+                    output.debug("Raw response: %s" % (
+                        str(results)))
+                    # results is a list
+                    # item 0 = return code
+                    # item 1 = stdout
+                    # item 2 = stderr
+                    if results[0] != 0:
+                        success = False
+                        output.info('%s returned %s for command %s' % (
+                            target_hosts, results[0], called))
 
+                    if success and len(_check_scripts):
+                        # Execute all check scripts.
+                        current_script_count = 0
+                        check_scripts_passed = False
+                        for check_script in _check_scripts:
+                            output.info('Executing check_script %s.' % (
+                                check_script))
+                            check_result = client.command.run(check_script)
+                            output.info(
+                                '%s returned %s for check_script '
+                                '%s on attempt %s' % (
+                                    target_hosts, check_result[0],
+                                    check_script, attempt_count))
+
+                            # check script isn't happy, try again
+                            if check_result[0] != 0:
+                                output.info(
+                                    'Waiting a few seconds and trying again.')
+                                # Sleep for a short period before trying again
+                                success = False
+                                sleep(2)
+                                break
+                            # We get here if it returned a 0 ..
+                            elif current_script_count == len(_check_scripts):
+                                # since it's the last script
+                                # and they all passed
+                                check_scripts_passed = True
+
+                        # If all the check scripts passed then break the loop
+                        if check_scripts_passed:
+                            output.info('All check scripts passed!')
+                            break
+                    else:
+                        # Nothing to test with ...
+                        break
             except FuncException, fex:
                 raise FuncWorkerError(str(fex))
 
