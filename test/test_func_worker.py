@@ -473,6 +473,9 @@ class TestFuncWorker(TestCase):
                     "stderr here"
                 ]
 
+                fc().job_status.return_value = (
+                    func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
+
                 target = getattr(getattr(fc(), cmd), sub)
                 target.return_value = results
                 worker._on_open(self.connection)
@@ -531,6 +534,17 @@ class TestFuncWorker(TestCase):
         """
         fc().command.run().__getitem__.return_value = 1
 
+        # Make the Func return data
+        # NOTE: this causes fc's call count to ++
+        results = [
+            0,
+            "stdout here",
+            "stderr here"
+        ]
+
+        fc().job_status.return_value = (
+            func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
+
         for config_file, cmd, sub, rargs in CONFIG_FILES:
             with nested(
                     mock.patch('pika.SelectConnection'),
@@ -543,13 +557,6 @@ class TestFuncWorker(TestCase):
                     config_file=config_file,
                     output_dir='/tmp/logs/')
 
-                # Make the Func return data
-                # NOTE: this causes fc's call count to ++
-                results = [
-                    0,
-                    "stdout here",
-                    "stderr here"
-                ]
 
                 target = getattr(getattr(fc(), cmd), sub)
                 target.return_value = results
@@ -630,6 +637,8 @@ class TestFuncWorker(TestCase):
                         "stdout here",
                         "stderr here"
                     ]
+                    fc().job_status.return_value = (
+                    func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
 
                     target = getattr(getattr(fc(), cmd), sub)
                     target.return_value = results
@@ -684,7 +693,7 @@ class TestFuncWorker(TestCase):
                 fc.reset_mock()
                 self._reset_mocks()
 
-    def test_good_with_check_failing_scripts(self, fc):
+    def test_fail_with_check_failing_scripts(self, fc):
         """
         When test scripts are given they should be executed.
         """
@@ -709,6 +718,9 @@ class TestFuncWorker(TestCase):
                     "stdout here",
                     "stderr here"
                 ]
+
+                fc().job_status.return_value = (
+                    func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
 
                 target = getattr(getattr(fc(), cmd), sub)
                 target.return_value = results
