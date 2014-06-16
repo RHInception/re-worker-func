@@ -126,9 +126,6 @@ class FuncWorker(Worker):
 
             try:
                 output.info('Executing func command ...')
-                # TODO: Revisit ... setting to async=False for now On
-                # taboot we use async and poll for completion. Also we
-                # allow host globbing.
                 target_hosts = ";".join(params['hosts'])
                 (found, missing) = expand_globs(
                     params['hosts'], self.app_logger)
@@ -168,7 +165,20 @@ class FuncWorker(Worker):
                             str(target_callable), str(target_params)))
                     # Call the fc.Client.COMMAND.SUBCOMMAND
                     # method with the collected parameters
-                    results = target_callable(*target_params)
+
+                    job_id = target_callable(*target_params)
+                    (status, results) = (None, None)
+                    while status != func.jobthing.JOB_ID_FINISHED:
+                        (status, results) = client.job_status(job_id)
+                        sleep(1)
+
+                    # TODO: what if we're calling multiple hosts at once?
+                    #
+                    # For async jobs, func will return a dictionary for
+                    # the result. Each key in the dict is a hostname, the
+                    # value is a list of [return code, stdout, stderr]
+                    results = results[params['hosts'][0]]
+
                     # success set to False if anything returns non 0
                     success = True
                     # called is a nice repr of the command

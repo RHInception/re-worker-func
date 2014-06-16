@@ -16,6 +16,7 @@
 Unittests.
 """
 
+import func
 import pika
 import mock
 
@@ -302,6 +303,17 @@ class TestFuncWorker(TestCase):
         Verify when a good request is received the worker executes as
         expected with one or more hosts.
         """
+        results = [
+            0,
+            "stdout here",
+            "stderr here"
+        ]
+
+        # The output from job_status ...
+        fc().job_status.return_value = (
+            func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
+
+
         for config_file, cmd, sub, rargs in CONFIG_FILES:
             for hosts in (['127.0.0.1'], ['127.0.0.1', '127.0.0.2']):
                 with nested(
@@ -316,11 +328,6 @@ class TestFuncWorker(TestCase):
 
                     # Make the Func return data
                     # NOTE: this causes fc's call count to ++
-                    results = [
-                        0,
-                        "stdout here",
-                        "stderr here"
-                    ]
 
                     target = getattr(getattr(fc(), cmd), sub)
                     target.return_value = results
@@ -360,7 +367,7 @@ class TestFuncWorker(TestCase):
 
                     # Func should call to create the client
                     # With mocking and expected calls this will be at least 3
-                    assert fc.call_count in (3, 4)
+                    assert fc.call_count >= 3
                     assert fc.call_args[0][0] == ";".join(hosts)
                     # And the client should execute expected calls
                     assert target.call_count == 1
@@ -377,6 +384,16 @@ class TestFuncWorker(TestCase):
         Verify when a good request is received but func notes an issue
         the proper result occurs.
         """
+        results = [
+            1,
+            "stdout here",
+            "stderr here"
+        ]
+
+        # The output from job_status ...
+        fc().job_status.return_value = (
+            func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
+
         for config_file, cmd, sub, rargs in CONFIG_FILES:
             with nested(
                     mock.patch('pika.SelectConnection'),
@@ -391,11 +408,7 @@ class TestFuncWorker(TestCase):
                 # Make the Func return data
                 # NOTE: this causes fc's call count to ++
                 fc_cmd = getattr(getattr(fc(), cmd), sub)
-                fc_cmd.return_value = [
-                    1,
-                    "stdout here",
-                    "stderr here"
-                ]
+                fc_cmd.return_value = results
 
                 worker._on_open(self.connection)
                 worker._on_channel_open(self.channel)
