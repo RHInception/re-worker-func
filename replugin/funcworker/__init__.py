@@ -164,7 +164,7 @@ class FuncWorker(Worker):
                 # For async jobs, func will return a dictionary for
                 # the result. Each key in the dict is a hostname, the
                 # value is a list of [return code, stdout, stderr]
-                results = results[target_hosts[0]]
+                results = results[params['hosts'][0]]
 
                 # success set to False if anything returns non 0
                 success = True
