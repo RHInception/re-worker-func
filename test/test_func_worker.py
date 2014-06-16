@@ -300,77 +300,77 @@ class TestFuncWorker(TestCase):
     def test_good_request(self, fc):
         """
         Verify when a good request is received the worker executes as
-        expected.
+        expected with one or more hosts.
         """
         for config_file, cmd, sub, rargs in CONFIG_FILES:
-            with nested(
-                    mock.patch('pika.SelectConnection'),
-                    mock.patch('replugin.funcworker.FuncWorker.notify'),
-                    mock.patch('replugin.funcworker.FuncWorker.send')):
-                worker = funcworker.FuncWorker(
-                    MQ_CONF,
-                    logger=self.app_logger,
-                    config_file=config_file,
-                    output_dir='/tmp/logs/')
+            for hosts in (['127.0.0.1'], ['127.0.0.1', '127.0.0.2']):
+                with nested(
+                        mock.patch('pika.SelectConnection'),
+                        mock.patch('replugin.funcworker.FuncWorker.notify'),
+                        mock.patch('replugin.funcworker.FuncWorker.send')):
+                    worker = funcworker.FuncWorker(
+                        MQ_CONF,
+                        logger=self.app_logger,
+                        config_file=config_file,
+                        output_dir='/tmp/logs/')
 
-                # Make the Func return data
-                # NOTE: this causes fc's call count to ++
-                results = [
-                    0,
-                    "stdout here",
-                    "stderr here"
-                ]
+                    # Make the Func return data
+                    # NOTE: this causes fc's call count to ++
+                    results = [
+                        0,
+                        "stdout here",
+                        "stderr here"
+                    ]
 
-                target = getattr(getattr(fc(), cmd), sub)
-                target.return_value = results
-                worker._on_open(self.connection)
-                worker._on_channel_open(self.channel)
+                    target = getattr(getattr(fc(), cmd), sub)
+                    target.return_value = results
+                    worker._on_open(self.connection)
+                    worker._on_channel_open(self.channel)
 
-                body = {
-                    'parameters': {
-                        'command': cmd,
-                        'subcommand': sub,
-                        'hosts': ['127.0.0.1']
+                    body = {
+                        'parameters': {
+                            'command': cmd,
+                            'subcommand': sub,
+                            'hosts': hosts
+                        }
                     }
-                }
-                for key in rargs:
-                    body['parameters'][key] = 'test_data'
+                    for key in rargs:
+                        body['parameters'][key] = 'test_data'
 
-                # Execute the call
-                worker.process(
-                    self.channel,
-                    self.basic_deliver,
-                    self.properties,
-                    body,
-                    self.logger)
+                    # Execute the call
+                    worker.process(
+                        self.channel,
+                        self.basic_deliver,
+                        self.properties,
+                        body,
+                        self.logger)
 
-                assert worker.send.call_count == 2  # start then success
-                print worker.send.call_args[0][2]
-                assert worker.send.call_args[0][2] == {
-                    'status': 'completed', 'data': results,
-                }
+                    assert worker.send.call_count == 2  # start then success
+                    assert worker.send.call_args[0][2] == {
+                        'status': 'completed', 'data': results,
+                    }
 
-                # Notification should succeed
-                assert worker.notify.call_count == 1
-                expected = 'successfully executed'
-                assert expected in worker.notify.call_args[0][1]
-                assert worker.notify.call_args[0][2] == 'completed'
-                # Log should happen as info at least once
-                assert self.logger.info.call_count >= 1
+                    # Notification should succeed
+                    assert worker.notify.call_count == 1
+                    expected = 'successfully executed'
+                    assert expected in worker.notify.call_args[0][1]
+                    assert worker.notify.call_args[0][2] == 'completed'
+                    # Log should happen as info at least once
+                    assert self.logger.info.call_count >= 1
 
-                # Func should call to create the client
-                # Note: it's called one extra time for mocking
-                # Note: it's called another extra time for glob verification
-                assert fc.call_count == 3
-                assert fc.call_args[0][0] == '127.0.0.1'
-                # And the client should execute expected calls
-                assert target.call_count == 1
-                target.assert_called_with(*[
-                    'test_data' for x in range(len(rargs))])
+                    # Func should call to create the client
+                    # With mocking and expected calls this will be at least 3
+                    assert fc.call_count in (3, 4)
+                    assert fc.call_args[0][0] == ";".join(hosts)
+                    # And the client should execute expected calls
+                    assert target.call_count == 1
+                    target.assert_called_with(*[
+                        'test_data' for x in range(len(rargs))])
 
-            # Force reset
-            fc.reset_mock()
-            self._reset_mocks()
+                    # Force reset
+                    fc.reset_mock()
+                    fc.call_count = 0
+                    self._reset_mocks()
 
     def test_good_request_with_bad_response(self, fc):
         """
