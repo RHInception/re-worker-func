@@ -100,7 +100,7 @@ class TestFuncWorker(TestCase):
         """
         # The FSM should be notified that this failed
         assert worker.send.call_count == 2  # start then error
-        assert worker.send.call_args[0][2] == {'status': 'failed'}
+        assert worker.send.call_args[0][2]['status'] == 'failed'
 
         # Notification should be a failure
         assert worker.notify.call_count == 1
@@ -584,9 +584,7 @@ class TestFuncWorker(TestCase):
                     self.logger)
 
                 assert worker.send.call_count == 2  # start then success
-                assert worker.send.call_args[0][2] == {
-                    'status': 'failed'
-                }
+                assert worker.send.call_args[0][2]['status'] == 'failed'
 
                 # Notification should succeed
                 assert worker.notify.call_count == 1
@@ -748,9 +746,7 @@ class TestFuncWorker(TestCase):
 
                 assert worker.send.call_count == 2  # start then success
                 print worker.send.call_args[0][2]
-                assert worker.send.call_args[0][2] == {
-                    'status': 'failed',
-                }
+                assert worker.send.call_args[0][2]['status'] == 'failed'
 
                 # Notification should succeed
                 assert worker.notify.call_count == 1

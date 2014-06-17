@@ -137,13 +137,8 @@ class FuncWorker(Worker):
                         missing))
 
                 if len(missing) > 0:
-                    self.send(
-                        properties.reply_to, corr_id, {
-                            'status': 'errored',
-                            'data': 'Hosts not discoverable: %s' % (
-                                str(missing))
-                        }, exchange='')
-                    return False
+                    raise FuncWorkerError(
+                        'Hosts not discoverable: %s' % (str(missing)))
 
                 self.app_logger.info('Executing %s.%s(%s) on %s' % (
                     params['command'], params['subcommand'],
@@ -263,7 +258,7 @@ class FuncWorker(Worker):
             self.send(
                 properties.reply_to,
                 corr_id,
-                {'status': 'failed'},
+                {'status': 'failed', 'data': str(fwe)},
                 exchange=''
             )
             self.notify(
