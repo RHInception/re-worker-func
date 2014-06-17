@@ -516,7 +516,7 @@ class TestFuncWorker(TestCase):
 
                 # No sleeping should have occured as the check script
                 # returned 0 or wasn't provided
-                assert funcworker.sleep.call_count == 0
+                assert funcworker.sleep.call_count == 2
 
                 assert fc.call_args[0][0] == '127.0.0.1'
                 # And the client should execute expected calls
@@ -584,22 +584,21 @@ class TestFuncWorker(TestCase):
                     self.logger)
 
                 assert worker.send.call_count == 2  # start then success
-                print worker.send.call_args[0][2]
                 assert worker.send.call_args[0][2] == {
-                    'status': 'completed', 'data': results,
+                    'status': 'failed'
                 }
 
                 # Notification should succeed
                 assert worker.notify.call_count == 1
-                expected = 'successfully executed'
+                expected = 'failed'
                 assert expected in worker.notify.call_args[0][1]
-                assert worker.notify.call_args[0][2] == 'completed'
+                assert worker.notify.call_args[0][2] == 'failed'
                 # Log should happen as info at least once
                 assert self.logger.info.call_count >= 1
 
                 # No sleeping should have occured as the check script
                 # returned 0 or wasn't provided
-                assert funcworker.sleep.call_count == 2
+                assert funcworker.sleep.call_count == 4
 
                 assert fc.call_args[0][0] == '127.0.0.1'
                 # And the client should execute expected calls
@@ -681,7 +680,7 @@ class TestFuncWorker(TestCase):
 
                     # No sleeping should have occured as the check script
                     # returned 0 or wasn't provided
-                    assert funcworker.sleep.call_count == 0
+                    assert funcworker.sleep.call_count == 1 + len(check_scripts)
 
                     assert fc.call_args[0][0] == '127.0.0.1'
                     # And the client should execute expected calls
@@ -689,9 +688,9 @@ class TestFuncWorker(TestCase):
                     target.assert_called_with(*[
                         'test_data' for x in range(len(rargs))])
 
-                # Force reset
-                fc.reset_mock()
-                self._reset_mocks()
+                    # Force reset
+                    fc.reset_mock()
+                    self._reset_mocks()
 
     def test_fail_with_check_failing_scripts(self, fc):
         """
@@ -763,7 +762,7 @@ class TestFuncWorker(TestCase):
 
                 # No sleeping should have occured as the check script
                 # returned 0 or wasn't provided
-                assert funcworker.sleep.call_count == 2
+                assert funcworker.sleep.call_count == 4
 
                 assert fc.call_args[0][0] == '127.0.0.1'
                 # And the client should execute expected calls
