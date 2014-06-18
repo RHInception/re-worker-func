@@ -9,8 +9,8 @@
 
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
-Version: 0.0.1
-Release: 4%{?dist}
+Version: 0.0.2
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -39,6 +39,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Wed Jun 18 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-1
+- Func commands run in async mode now
+
 * Tue Jun 17 2014 Ryan Cook <rcook@redhat.com> - 0.0.1-4
 - Added exclude __init__.py*
 
