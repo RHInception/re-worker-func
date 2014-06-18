@@ -6,6 +6,7 @@
 #   make clean               -- Clean up garbage
 #   make pyflakes, make pep8 -- source code checks
 #   make test ----------------- run all unit tests (export LOG=true for /tmp/ logging)
+#   make ci ------------------- Execute CI steps (for travis or jenkins)
 
 ########################################################
 
@@ -24,8 +25,23 @@ NAME := re-worker-func
 
 RPMSPECDIR := ./contrib/rpm/
 RPMSPEC := $(RPMSPECDIR)/re-worker-func.spec
+TESTPACKAGE := replugin
+SHORTNAME := replugin
 
 SRCDIR := replugin/funcworker
+
+################
+# For CI deps
+TMPDIR = $(shell mktemp -d)
+FUNCDIR := $(TMPDIR)
+REWORKERDIR := $(TMPDIR)
+CMDIR := $(TMPDIR)
+
+pip:
+	@echo $(FUNCDIR)
+	@echo $(REWORKERDIR)
+	@echo $(CMDIR)
+
 
 sdist: clean
 	python setup.py sdist
@@ -87,3 +103,39 @@ rpm: rpmcommon
 	@echo "$(NAME) RPMs are built:"
 	@find rpm-build -maxdepth 2 -name '$(NAME)*.rpm' | awk '{print "    " $$1}'
 	@echo "#############################################"
+
+virtualenv:
+	@echo "#############################################"
+	@echo "# Creating a virtualenv"
+	@echo "#############################################"
+	virtualenv $(NAME)env
+	. $(NAME)env/bin/activate && PYTHONUSERBASE=$(NAME)env pip install -r requirements.txt
+	. $(NAME)env/bin/activate && pip install pep8 nose coverage mock
+
+#       If there are any special things to install do it here
+	. $(NAME)env/bin/activate && cd $(REWORKERDIR) && wget https://github.com/RHInception/re-worker/archive/master.zip && unzip master && cd re-worker-master && pip install .
+	. $(NAME)env/bin/activate && cd $(FUNCDIR) && wget https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && python ./setup.py install --root=$(NAME)env
+	. $(NAME)env/bin/activate && cd $(CMDIR) && wget https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz  && tar xvzf certmaster-0.28.tar.gz && cd certmaster-0.28 && python setup.py install --root=$(NAME)env
+
+
+ci-unittests:
+	@echo "#############################################"
+	@echo "# Running Unit Tests in virtualenv"
+	@echo "#############################################"
+	. $(NAME)env/bin/activate && nosetests -v --with-cover --cover-min-percentage=80 --cover-package=$(TESTPACKAGE) test/
+
+ci-list-deps:
+	@echo "#############################################"
+	@echo "# Listing all pip deps"
+	@echo "#############################################"
+	. $(NAME)env/bin/activate && pip freeze
+
+ci-pep8:
+	@echo "#############################################"
+	@echo "# Running PEP8 Compliance Tests in virtualenv"
+	@echo "#############################################"
+	. $(NAME)env/bin/activate && pep8 --ignore=E501,E121,E124 $(SHORTNAME)/
+
+
+ci: clean virtualenv ci-list-deps ci-pep8 ci-unittests
+	:

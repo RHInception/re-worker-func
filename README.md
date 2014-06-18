@@ -5,9 +5,16 @@ Func Worker for Release Engine for our new [release engine hotness](https://gith
 [![Build Status](https://api.travis-ci.org/RHInception/re-worker-func.png)](https://travis-ci.org/RHInception/re-worker-func/)
 
 ## Unittests
-Run ``make tests`` from the main directory to execute unittests
+Run ``make ci`` from the main directory to execute unittests
 (including [pep8](https://pypi.python.org/pypi/pep8) and
 [pyflakes](https://pypi.python.org/pypi/pyflakes))
+
+You'll need some dependencies fulfilled first:
+
+* ``libffi-devel``
+* ``openssl-libs``
+* ``openssl-devel``
+
 
 ## Configuration
 The configuration file uses the following pattern in JSON format:
@@ -77,3 +84,7 @@ configured with the ``yumcmd`` command.
     ]
 }
 ```
+
+
+
+#
