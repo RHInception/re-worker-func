@@ -37,11 +37,6 @@ FUNCDIR := $(TMPDIR)
 REWORKERDIR := $(TMPDIR)
 CMDIR := $(TMPDIR)
 
-pip:
-	@echo $(FUNCDIR)
-	@echo $(REWORKERDIR)
-	@echo $(CMDIR)
-
 
 sdist: clean
 	python setup.py sdist
@@ -59,7 +54,7 @@ unittests:
 clean:
 	@find . -type f -regex ".*\.py[co]$$" -delete
 	@find . -type f \( -name "*~" -or -name "#*" \) -delete
-	@rm -fR build dist rpm-build MANIFEST htmlcov .coverage funcworker.egg-info
+	@rm -fR build dist rpm-build MANIFEST htmlcov .coverage reworkerfunc.egg-info re-worker-funcenv
 
 pep8:
 	@echo "#############################################"
@@ -114,8 +109,9 @@ virtualenv:
 
 #       If there are any special things to install do it here
 	. $(NAME)env/bin/activate && cd $(REWORKERDIR) && wget https://github.com/RHInception/re-worker/archive/master.zip && unzip master && cd re-worker-master && pip install .
-	. $(NAME)env/bin/activate && cd $(FUNCDIR) && wget https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && python ./setup.py install --root=$(NAME)env
-	. $(NAME)env/bin/activate && cd $(CMDIR) && wget https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz  && tar xvzf certmaster-0.28.tar.gz && cd certmaster-0.28 && python setup.py install --root=$(NAME)env
+# Note how these next two lines end with '|| true', we do this because func and certmaster attempt to install files into /etc/, and that will fail
+	. $(NAME)env/bin/activate && cd $(FUNCDIR) && wget https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && pip install . || true
+	. $(NAME)env/bin/activate && cd $(CMDIR) && wget https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz && tar xvzf certmaster-0.28.tar.gz && cd certmaster-0.28 && pip install . || true
 
 
 ci-unittests:
