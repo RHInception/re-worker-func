@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -34,11 +34,15 @@ Release Engine Worker to run commands over Func.
 %{__python2} setup.py install -O1 --root=$RPM_BUILD_ROOT --record=re-worker-func-files.txt
 
 %files -f re-worker-func-files.txt
+%defattr(-, root, root)
 %doc README.md LICENSE AUTHORS conf/*
 %dir %{python2_sitelib}/%{_pkg_name}
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Thu Jun 19 2014 Steve Milner <stevem@gnulinux.net> - 0.0.2-2
+- Defattr not being used in files section.
+
 * Wed Jun 18 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-1
 - Func commands run in async mode now
 
