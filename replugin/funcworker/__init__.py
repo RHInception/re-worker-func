@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (C) 2014 SEE AUTHORS FILE
 #
 # This program is free software: you can redistribute it and/or modify
