@@ -311,11 +311,12 @@ class TestFuncWorker(TestCase):
 
         # The output from job_status ...
         fc().job_status.return_value = (
-            func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
+            func.jobthing.JOB_ID_FINISHED,
+            {'127.0.0.1': results, '127.0.0.2': results})
 
 
         for config_file, cmd, sub, rargs in CONFIG_FILES:
-            for hosts in (['127.0.0.1'], ['127.0.0.1', '127.0.0.2']):
+            for hosts in (['127.0.0.1'], ['127.0.0.2', '127.0.0.3']):
                 with nested(
                         mock.patch('pika.SelectConnection'),
                         mock.patch('replugin.funcworker.FuncWorker.notify'),
@@ -368,7 +369,8 @@ class TestFuncWorker(TestCase):
                     # Func should call to create the client
                     # With mocking and expected calls this will be at least 3
                     assert fc.call_count >= 3
-                    assert fc.call_args[0][0] == ";".join(hosts)
+                    # For static_hosts
+                    assert fc.call_args[0][0] in (";".join(hosts),'127.0.0.1')
                     # And the client should execute expected calls
                     assert target.call_count == 1
                     target.assert_called_with(*[

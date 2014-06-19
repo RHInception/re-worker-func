@@ -125,7 +125,19 @@ class FuncWorker(Worker):
 
             try:
                 output.info('Executing func command ...')
-                target_hosts = ";".join(params['hosts'])
+                # if hosts should be static then override whatever
+                # we were sent
+                if self._config.get('static_hosts', None):
+                    target_hosts = self._config['static_hosts']
+                    if len(params['hosts']):
+                        self.app_logger.warning(
+                            'Hosts param was not empty but static_hosts '
+                            'was set. Using static_hosts from config.')
+                    # Override params['hosts'] with the static_hosts list
+                    params['hosts'] = [self._config['static_hosts']]
+                else:
+                    target_hosts = ";".join(params['hosts'])
+
                 (found, missing) = expand_globs(
                     params['hosts'], self.app_logger)
 

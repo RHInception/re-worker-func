@@ -1,5 +1,6 @@
 {
     "queue": "funcnagios",
+    "static_hosts": "127.0.0.1",
     "nagios": {
         "schedule_svc_downtime": ["hostname", "services", "minutes"],
         "schedule_host_downtime": ["hostname", "minutes"],

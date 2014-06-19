@@ -9,8 +9,8 @@
 
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
-Version: 0.0.2
-Release: 3%{?dist}
+Version: 0.0.3
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Thu Jun 19 2014 Steve Milner <stevem@gnulinux.net> - 0.0.3-1
+- Config now allows for static_host overrides.
+
 * Thu Jun 19 2014 Ryan Cook <rcook@redhat.com> - 0.0.2-3
 - Pulled in updates to Makefile
 
