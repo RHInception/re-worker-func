@@ -110,8 +110,8 @@ virtualenv:
 #       If there are any special things to install do it here
 	. $(NAME)env/bin/activate && cd $(REWORKERDIR) && wget https://github.com/RHInception/re-worker/archive/master.zip && unzip master && cd re-worker-master && pip install .
 # Note how these next two lines end with '|| true', we do this because func and certmaster attempt to install files into /etc/, and that will fail
-	. $(NAME)env/bin/activate && cd $(FUNCDIR) && wget https://fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && pip install . || true
-	. $(NAME)env/bin/activate && cd $(CMDIR) && wget https://fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz && tar xvzf certmaster-0.28.tar.gz && cd certmaster-0.28 && pip install . || true
+	. $(NAME)env/bin/activate && cd $(FUNCDIR) && wget https://www.fedorahosted.org/releases/f/u/func/func-0.28.tar.gz && tar xvzf func-0.28.tar.gz && cd func-0.28 && pip install . || true
+	. $(NAME)env/bin/activate && cd $(CMDIR) && wget https://www.fedorahosted.org/releases/c/e/certmaster/certmaster-0.28.tar.gz && tar xvzf certmaster-0.28.tar.gz && cd certmaster-0.28 && pip install . || true
 
 
 ci-unittests:
