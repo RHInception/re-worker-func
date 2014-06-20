@@ -155,7 +155,19 @@ class FuncWorker(Worker):
                     params['command'], params['subcommand'],
                     target_params, target_hosts))
 
-                client = fc.Client(target_hosts, noglobs=True, async=False)
+                # TODO: what if we're calling multiple hosts at once?
+                #
+                # In the future, we basically need to loop over
+                # target_hosts -- submitting each job and recording
+                # the job_id -- then loop over the job ID's until each
+                # job_status is JOB_ID_FINISHED (or failed)
+                if len(target_hosts) == 1:
+                    _th = target_hosts[0]
+                else:
+                    # Pretty sure this won't work. So in the mean
+                    # time, dont' submit jobs with multiple hosts!
+                    _th = target_hosts
+                client = fc.Client(_th, noglobs=True, async=True)
                 # Func syntax can be kind of weird, as all modules
                 # ("COMMAND") appear as attributes of the `client`
                 # object ..
@@ -166,13 +178,14 @@ class FuncWorker(Worker):
                     params['subcommand'])
 
                 for attempt_count in range(_tries):
+                    self.app_logger.info("In the for loop (over _tries)")
                     output.debug(
                         'Invoking func method: "%s" with args: "%s"' % (
                             str(target_callable), str(target_params)))
                     # Call the fc.Client.COMMAND.SUBCOMMAND
                     # method with the collected parameters
-
                     job_id = target_callable(*target_params)
+                    self.app_logger.debug("Ran job, id is: %s. Polling for results now" % job_id)
                     (status, results) = (None, None)
                     while status != func.jobthing.JOB_ID_FINISHED:
                         (status, results) = client.job_status(job_id)
@@ -184,6 +197,7 @@ class FuncWorker(Worker):
                     # the result. Each key in the dict is a hostname, the
                     # value is a list of [return code, stdout, stderr]
                     results = results[params['hosts'][0]]
+                    self.app_logger.debug("Raw results: %s" % str(results))
 
                     # success set to False if anything returns non 0
                     success = True
