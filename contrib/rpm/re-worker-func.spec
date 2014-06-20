@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.0.3
-Release: 3%{?dist}
+Release: 4%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Fri Jun 20 2014 Steve Milner <stevem@gnulinux.net> - 0.0.3-4
+- Try loops now work properly.
+
 * Fri Jun 20 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.3-3
 - OK. Actually REALLY fix the async polling procedure
 

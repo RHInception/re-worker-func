@@ -241,7 +241,7 @@ class FuncWorker(Worker):
                         if check_scripts_passed:
                             output.info('All check scripts passed!')
                             break
-                    else:
+                    elif success:
                         # Nothing to test with ...
                         break
             except FuncException, fex:
