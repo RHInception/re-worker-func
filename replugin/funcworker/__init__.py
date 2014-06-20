@@ -161,13 +161,7 @@ class FuncWorker(Worker):
                 # target_hosts -- submitting each job and recording
                 # the job_id -- then loop over the job ID's until each
                 # job_status is JOB_ID_FINISHED (or failed)
-                if len(target_hosts) == 1:
-                    _th = target_hosts[0]
-                else:
-                    # Pretty sure this won't work. So in the mean
-                    # time, dont' submit jobs with multiple hosts!
-                    _th = target_hosts
-                client = fc.Client(_th, noglobs=True, async=True)
+                client = fc.Client(target_hosts, async=True)
                 # Func syntax can be kind of weird, as all modules
                 # ("COMMAND") appear as attributes of the `client`
                 # object ..
