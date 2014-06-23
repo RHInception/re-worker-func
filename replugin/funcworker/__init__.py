@@ -170,12 +170,15 @@ class FuncWorker(Worker):
                     getattr(client, params['command']),
                     # Next get the client.COMMAND.SUBCOMMAND method
                     params['subcommand'])
-
+                target_callable_repr = "%s.%s" % (
+                    params['command'],
+                    params['subcommand'])
                 for attempt_count in range(_tries):
                     self.app_logger.info("In the for loop (over _tries)")
                     output.debug(
                         'Invoking func method: "%s" with args: "%s"' % (
-                            str(target_callable), str(target_params)))
+                            str(target_callable_repr),
+                            str(target_params)))
                     # Call the fc.Client.COMMAND.SUBCOMMAND
                     # method with the collected parameters
                     job_id = target_callable(*target_params)
