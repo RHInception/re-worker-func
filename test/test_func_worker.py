@@ -40,11 +40,13 @@ MQ_CONF = {
 CONFIG_FILES = (
     # FILENAME            COMMAND    SUBCMD   REQUIRED ARGS
     ('conf/service.json', 'service', 'start', ['service']),
-    ('conf/yumcmd.json', 'yumcmd', 'update', []),
-    ('conf/nagios.json', 'nagios',
-     'schedule_svc_downtime', ["hostname", "services", "minutes"]),
+    ('conf/yumcmd.json', 'yumcmd', 'update', [])
 )
 
+NAGIOS_CONFIG_FILE = (
+    ('conf/nagios.json', 'nagios', 'ScheduleDowntime',
+     ["nagios_url", "services", "minutes"])
+)
 
 @mock.patch('func.overlord.client.Client')
 class TestFuncWorker(TestCase):
@@ -217,7 +219,7 @@ class TestFuncWorker(TestCase):
 
     def test_missing_hosts(self, fc):
         """
-        Verify that if no hosts variablr is passed we fail as expected.
+        Verify that if no hosts variable is passed we fail as expected.
         """
         for config_file, cmd, sub, rargs in CONFIG_FILES:
             with nested(

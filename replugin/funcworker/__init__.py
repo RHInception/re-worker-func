@@ -24,6 +24,8 @@ import func.overlord.client as fc
 
 from func.minion.codes import FuncException
 import func.CommonErrors
+import traceback
+import sys
 
 
 def expand_globs(globs, app_logger):
@@ -56,7 +58,6 @@ class FuncWorker(Worker):
     """
     Simple worker which executes remote func calls.
     """
-
     def process(self, channel, basic_deliver, properties, body, output):
         """Executes remote func calls when requested. Only configured
         calls are allowed!
@@ -108,61 +109,14 @@ class FuncWorker(Worker):
             _tries = int(params.get('tries', 1))
             _check_scripts = params.get('check_scripts', [])
 
-           # Now verify we have what we need (and make our target_params too)
-            target_hosts = None
-            try:
-                # Special attention for those extra-special func modules...
-                module_handler = __import__("replugin.funcworker.%s" %
-                                            params['command'],
-                                            globals(),
-                                            locals())
-                (target_hosts,
-                 _target_params) = module_handler.parse_target_params(params)
-                target_params = _target_params.values()
-                params.update(_target_params)
-            except ImportError:
-                # This module requires no special handling.
-                pass
-            except ValueError, e:
-                # The handler was imported, but there is no parser for
-                # the given sub-command. Or in other words, this func
-                # worker doesn't have the requested subcommand. Sorry,
-                # bud.
-                raise FuncWorkerError(
-                    'Requested subcommand for %s is not supported '
-                    '(no parameter parser could be found)' % e.subcommand)
-            finally:
-                # TODO: Refactor this into a generalized parameter
-                # parser like the unique parsers (above)
-                if not target_hosts:
-                    target_params = []
-                    required_params = command_cfg[params['subcommand']]
-                    for required in required_params:
-                        if required not in params.keys():
-                            raise FuncWorkerError(
-                                'Command %s.%s requires the following params: %s. '
-                                '%s was missing.' % (
-                                    params['command'],
-                                    params['subcommand'],
-                                    command_cfg[params['subcommand']],
-                                    required))
-                        else:
-                            target_params.append(params[required])
+            # Parse the given parameters. Possibly invoke a
+            # specialized sub-parser for special-snowflake methods.
+            (_update_params, target_params) = self.parse_params(params, command_cfg)
+            params.update(_update_params)
 
             try:
                 output.info('Executing func command ...')
-                # if hosts should be static then override whatever
-                # we were sent
-                if self._config.get('static_hosts', None):
-                    target_hosts = self._config['static_hosts']
-                    if len(params['hosts']):
-                        self.app_logger.warning(
-                            'Hosts param was not empty but static_hosts '
-                            'was set. Using static_hosts from config.')
-                    # Override params['hosts'] with the static_hosts list
-                    params['hosts'] = [self._config['static_hosts']]
-                else:
-                    target_hosts = ";".join(params['hosts'])
+                target_hosts = ";".join(params['hosts'])
 
                 (found, missing) = expand_globs(
                     params['hosts'], self.app_logger)
@@ -316,6 +270,75 @@ class FuncWorker(Worker):
                 'failed',
                 corr_id)
             output.error(str(fwe))
+
+    def parse_params(self, params, command_cfg):
+        """Parse the parameters and return a tuple of updated_parameters and
+target_parameters (an array of parameters to pass to our target func
+module method).
+        """
+        _update_params = {}
+        # Now verify we have what we need (and make our target_params too)
+        try:
+            # Special attention for those extra-special func modules...
+            self.app_logger.debug("Looking to see if there is a special "
+                                  "parameter parser for this worker")
+            func_module = __import__("replugin.funcworker.%s" %
+                                     params['command'],
+                                     globals(),
+                                     locals())
+            func_worker = getattr(func_module, 'funcworker')
+            module_handler = getattr(func_worker, params['command'])
+
+            (_update_params,
+             target_params) = module_handler.parse_target_params(params,
+                                                                 self.app_logger)
+            params.update(_update_params)
+        except ImportError:
+            # This module requires no special handling.
+            self.app_logger.debug("No special parameter parser required "
+                                  "for this subcommand")
+            pass
+        except ValueError, e:
+            self.app_logger.error("Could not find parser for specified "
+                                  "subcommand: %s" % params['subcommand'])
+            # The handler was imported, but there is no parser for
+            # the given sub-command. Or in other words, this func
+            # worker doesn't have the requested subcommand. Sorry,
+            # bud.
+            self.app_logger.error(e)
+            raise FuncWorkerError(
+                'Requested subcommand for %s is not supported '
+                '(no parameter parser could be found)' % params['subcommand'])
+        except Exception, e:  # pragma: no cover
+            self.app_logger.error("Unknown exception raised: %s" % (
+                e))
+            _type, value, tb = sys.exc_info()
+            self.app_logger.error("Printing full traceback:")
+            traceback.print_exc()
+            # pdb.post_mortem(tb)
+            raise e
+        finally:
+            # TODO: Refactor this into a generalized parameter
+            # parser like the unique parsers (above)
+            if 'method_target_host' not in params:
+                self.app_logger.debug("No special parser discovered, "
+                                      "falling back to general parameter "
+                                      "parser")
+                target_params = []
+                required_params = command_cfg[params['subcommand']]
+                for required in required_params:
+                    if required not in params.keys():
+                        raise FuncWorkerError(
+                            'Command %s.%s requires the following params: %s. '
+                            '%s was missing.' % (
+                                params['command'],
+                                params['subcommand'],
+                                command_cfg[params['subcommand']],
+                                required))
+                    else:
+                        target_params.append(params[required])
+
+        return (_update_params, target_params)
 
 
 def main():  # pragma: no cover

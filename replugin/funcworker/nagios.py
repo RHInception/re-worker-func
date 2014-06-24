@@ -16,34 +16,38 @@
 Nagios specific func worker
 """
 
-import collections
 import types
 import re
 
 
-def parse_target_params(params):
+def parse_target_params(params, app_logger):
     """Parse the parameters provided by the FSM, `params`. Return the
 formatted parameters for the actual func method call.
 
 The sub-parsers for each possible subcommand are broken into their own
 separate functions. We will try to find a parser for the subcommand,
 evaluate with the provided parameters, and finally return the result.
-
-.. todo:: Handle missing parameters
     """
     try:
-        parser = globals()[str(params['subcommand'])]
-    except KeyError:
+        parser_name = "_parse_%s" % str(params['subcommand'])
+        parser = globals()[parser_name]
+        app_logger.debug("Found parser: %s" % parser_name)
+    except KeyError, e:
         # There is no parser for the provided subcommand. Most likely
         # a typo. Either way, there's nothing we can do. Oh well.
-        err = ValueError("Unknown subcommand: %s" % params['subcommand'])
+        app_logger.error("No parser found for the given subcommand: %s" % (
+            params['subcommand']))
+        err = ValueError("Unknown subcommand: %s - %s " % (
+            params['subcommand'],
+            str(e)))
         err.subcommand = params['subcommand']
         raise err
 
-    return parser(params)
+    result = parser(params, app_logger)
+    return result
 
 
-def _parse_ScheduleDowntime(params):
+def _parse_ScheduleDowntime(params, app_logger):
     """ScheduleDowntime - The API Signature for this command is simple, but
 the func method it calls can vary depending on intended result.
 
@@ -58,13 +62,19 @@ the func method it calls can vary depending on intended result.
 * Parameters: str(host), [service], int(minutes)"""
     ##################################################################
     # Dict of parameters to update the FSM-provided 'params' dict with.
-    _params = collections.OrderedDict()
+    _params = {}
     _params['command'] = 'nagios'
+    # List of arguments to pass to the called module method
+    _method_args = []
 
     ##################################################################
     # Hostname the nagios server. This is the target host for the func
     # command. That is to say, the host which the command is sent to.
     nagios_url = params['nagios_url']
+    # TODO: Handle multiple 'hosts' at once
+    _method_args.append(params['hosts'][0])
+    # Remember, we run this command on the nagios server:
+    _params['hosts'] = [nagios_url]
 
     ##################################################################
     # Is a service_host set? If yes, then the "target host" is
@@ -73,10 +83,49 @@ the func method it calls can vary depending on intended result.
     if params.get('service_host', '') != '':
         method_target_host = params['service_host']
     else:
-        #.. todo:: Handle multiple params at once
+        # .. todo:: Handle multiple params at once
         method_target_host = params['hosts'][0]
 
     _params['method_target_host'] = method_target_host
+
+    # ## *** ###   ### *** ###   ### *** ###   ### *** ###   ### *** ##
+    # Begin parsing the arguments to pass to the method call
+    # ## *** ###   ### *** ###   ### *** ###   ### *** ###   ### *** ##
+
+    ##################################################################
+    # Figure out if we need to add the 'service' argument as well to
+    # _method_args
+    #
+    # RECALL: ScheduleDowntime calls one of three func module
+    # methods. The arguments passed to ScheduleDowntime determine
+    # which module method is called.
+    #
+    # Did the playbook even bother to define 'service'? Default to
+    # 'HOST' if 'service' is undefined.
+    _service = params.get('service', 'HOST')
+    if isinstance(_service, types.StringTypes):
+        # String
+        # Explicitly setting downtime for a host
+        if re.match(r'^HOST$', _service, re.I):
+            _sub_command = "schedule_host_downtime"
+
+        # Explicitly setting downtime for a host AND all services on it
+        elif re.match(r'^ALL$', _service, re.I):
+            _sub_command = "schedule_host_and_svc_downtime"
+
+        else:
+            # If a single string was provided and that string is not
+            # 'HOST' or 'ALL' then only a single service was named. The
+            # func method we're calling requires 'service' as a LIST, so
+            # let's wrap it up in one.
+            _service = [_service]
+            _method_args.append(_service)
+            _sub_command = 'schedule_svc_downtime'
+    else:
+        # No 'else' to see here. If 'service' is a list then we leave
+        # it alone.
+        _method_args.append(_service)
+        _sub_command = 'schedule_svc_downtime'
 
     ##################################################################
     # Minutes to schedule downtime for. Default: 30
@@ -90,37 +139,7 @@ the func method it calls can vary depending on intended result.
                             "Got '%s'." % _minutes)
 
     _params['minutes'] = _minutes
-
-    ##################################################################
-    # RECALL: ScheduleDowntime calls one of three func module
-    # methods. The arguments passed to ScheduleDowntime determine
-    # which module method is called.
-    #
-    # Did the playbook even bother to define 'service'? Default to
-    # 'HOST' if 'service' is undefined.
-    _service = params.get('service', 'HOST')
-
-    # Explicitly setting downtime for a host
-    if re.match(r'^HOST$', _service, re.I):
-        _sub_command = "schedule_host_downtime"
-
-    # Explicitly setting downtime for a host AND all services on it
-    elif re.match(r'^ALL$', _service, re.I):
-        _sub_command = "schedule_host_and_svc_downtime"
-
-    # Set downtime for the provided item(s) in 'service'.
-    else:
-        # If a single string was provided and that string is not
-        # 'HOST' or 'ALL' then only a single service was named. The
-        # func method we're calling requires 'service' as a LIST, so
-        # let's wrap it up in one.
-        if isinstance(_service, types.StringTypes):
-            _service = [_service]
-        # No 'else' to see here. If 'service' is a list then we leave
-        # it alone.
-
-        _params['service'] = _service
-        _sub_command = 'schedule_svc_downtime'
+    _method_args.append(_minutes)
 
     ##################################################################
     # OK. We've processed all of the arguments. Lets assemble
@@ -130,7 +149,9 @@ the func method it calls can vary depending on intended result.
     ##################################################################
     # The main func worker expects what it calls "target_hosts" to be
     # a list. So we return the nagios_url as a list.
-    return ([nagios_url], _params)
+    app_logger.debug("Parsed playbook parameters: %s" % (
+        str((_params, _method_args))))
+    return (_params, _method_args)
 
 
 def process_result(result):
