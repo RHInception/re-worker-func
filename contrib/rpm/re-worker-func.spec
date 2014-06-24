@@ -9,8 +9,8 @@
 
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
-Version: 0.0.3
-Release: 5%{?dist}
+Version: 0.0.4
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Tue Jun 24 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.4-1
+- Begin implementing a system for custom func module parameter/result handlers
+
 * Mon Jun 23 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.3-5
 - Fix 'Invoking func method' output inserting an empty string for the called method
 

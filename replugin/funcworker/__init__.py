@@ -108,20 +108,46 @@ class FuncWorker(Worker):
             _tries = int(params.get('tries', 1))
             _check_scripts = params.get('check_scripts', [])
 
-            # Now verify we have what we need (and make our target_params too)
-            target_params = []
-            required_params = command_cfg[params['subcommand']]
-            for required in required_params:
-                if required not in params.keys():
-                    raise FuncWorkerError(
-                        'Command %s.%s requires the following params: %s. '
-                        '%s was missing.' % (
-                            params['command'],
-                            params['subcommand'],
-                            command_cfg[params['subcommand']],
-                            required))
-                else:
-                    target_params.append(params[required])
+           # Now verify we have what we need (and make our target_params too)
+            target_hosts = None
+            try:
+                # Special attention for those extra-special func modules...
+                module_handler = __import__("replugin.funcworker.%s" %
+                                            params['command'],
+                                            globals(),
+                                            locals())
+                (target_hosts,
+                 _target_params) = module_handler.parse_target_params(params)
+                target_params = _target_params.values()
+                params.update(_target_params)
+            except ImportError:
+                # This module requires no special handling.
+                pass
+            except ValueError, e:
+                # The handler was imported, but there is no parser for
+                # the given sub-command. Or in other words, this func
+                # worker doesn't have the requested subcommand. Sorry,
+                # bud.
+                raise FuncWorkerError(
+                    'Requested subcommand for %s is not supported '
+                    '(no parameter parser could be found)' % e.subcommand)
+            finally:
+                # TODO: Refactor this into a generalized parameter
+                # parser like the unique parsers (above)
+                if not target_hosts:
+                    target_params = []
+                    required_params = command_cfg[params['subcommand']]
+                    for required in required_params:
+                        if required not in params.keys():
+                            raise FuncWorkerError(
+                                'Command %s.%s requires the following params: %s. '
+                                '%s was missing.' % (
+                                    params['command'],
+                                    params['subcommand'],
+                                    command_cfg[params['subcommand']],
+                                    required))
+                        else:
+                            target_params.append(params[required])
 
             try:
                 output.info('Executing func command ...')
@@ -182,7 +208,8 @@ class FuncWorker(Worker):
                     # Call the fc.Client.COMMAND.SUBCOMMAND
                     # method with the collected parameters
                     job_id = target_callable(*target_params)
-                    self.app_logger.debug("Ran job, id is: %s. Polling for results now" % job_id)
+                    self.app_logger.debug("Ran job, id is: %s. "
+                                          "Polling for results now" % job_id)
                     (status, results) = (None, None)
                     while status != func.jobthing.JOB_ID_FINISHED:
                         (status, results) = client.job_status(job_id)
