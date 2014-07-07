@@ -111,7 +111,8 @@ class FuncWorker(Worker):
 
             # Parse the given parameters. Possibly invoke a
             # specialized sub-parser for special-snowflake methods.
-            (_update_params, target_params) = self.parse_params(params, command_cfg)
+            (_update_params, target_params) = self.parse_params(
+                params, command_cfg)
             params.update(_update_params)
 
             try:
@@ -184,7 +185,17 @@ class FuncWorker(Worker):
                         params['command'], params['subcommand'], target_params)
                     output.debug("Raw response: %s" % (
                         str(results)))
-                    # results is a list
+
+                    # FIXME: This forces non command output into a command
+                    #        output like structure. It's a hack.
+                    # If this wasn't a system command the results may
+                    # be a string ...
+                    if type(results) == str:
+                        results = [0, results, '']
+                    # ... or a list of strings
+                    elif type(results[0]) == str:
+                        results = [0, ", ".join(results), '']
+
                     # item 0 = return code
                     # item 1 = stdout
                     # item 2 = stderr
@@ -290,8 +301,8 @@ module method).
             module_handler = getattr(func_worker, params['command'])
 
             (_update_params,
-             target_params) = module_handler.parse_target_params(params,
-                                                                 self.app_logger)
+             target_params) = module_handler.parse_target_params(
+                 params, self.app_logger)
             params.update(_update_params)
         except ImportError:
             # This module requires no special handling.
