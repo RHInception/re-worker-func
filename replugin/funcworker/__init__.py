@@ -168,7 +168,9 @@ class FuncWorker(Worker):
                     (status, results) = (None, None)
                     while status != func.jobthing.JOB_ID_FINISHED:
                         (status, results) = client.job_status(job_id)
-                        sleep(1)
+                        self.app_logger.info(
+                            "Waiting for JOB_ID_FINISHED. Status: %s" % status)
+                        sleep(3)
 
                     # TODO: what if we're calling multiple hosts at once?
                     #

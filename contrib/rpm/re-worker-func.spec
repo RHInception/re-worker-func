@@ -9,8 +9,8 @@
 
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
-Version: 0.0.4
-Release: 3%{?dist}
+Version: 0.0.5
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Fri Jul 25 2014 Steve Milner <stevem@gnulinux.net> - 0.0.5-1
+- Added more app logging.
+
 * Mon Jul 7 2014 Ryan Cook <rcook@redhat.com> - 0.0.4-3
 - Support for multiple response types
 
