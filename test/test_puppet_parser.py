@@ -42,28 +42,48 @@ class TestPuppetParser(TestCase):
     def test_run_noop(self):
         """puppet:Run with noop param parses correctly"""
         expected = ["puppet agent --test --noop --color=false"]
-        params = {}
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Run',
+            'noop': True
+        }
         (update, cmd) = ppt._parse_Run(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
     def test_run_tags(self):
         """puppet:Run with tags parses correctly"""
         expected = ["puppet agent --test --tags tag1 tag2 tag3 --color=false"]
-        params = {}
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Run',
+            'tags': ['tag1', 'tag2', 'tag3']
+        }
         (update, cmd) = ppt._parse_Run(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
     def test_run_server(self):
         """puppet:Run with specific server params parses correctly"""
-        expected = ["puppet agent --server puppetmaster01.example.com --color=false"]
-        params = {}
+        expected = ["puppet agent --test --server puppetmaster01.example.com --color=false"]
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Run',
+            'server': 'puppetmaster01.example.com'
+        }
         (update, cmd) = ppt._parse_Run(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
     def test_run_enable(self):
         """puppet:Run with agent enable parses correctly"""
-        expected = ["puppet agent --enable && puppet agent --test --color=false"]
-        params = {}
+        expected = ["puppet agent --enable --color=false && puppet agent --test --color=false"]
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Run',
+            'enable': True
+        }
         (update, cmd) = ppt._parse_Run(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
@@ -73,8 +93,12 @@ class TestPuppetParser(TestCase):
     def test_enable(self):
         """puppet:Enable with no params parses correctly"""
         expected = ["puppet agent --enable --color=false"]
-        params = {}
-        (update, cmd) = ppt._parse_Run(params, self.app_logger)
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Enable'
+        }
+        (update, cmd) = ppt._parse_Enable(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
     ##################################################################
@@ -83,23 +107,35 @@ class TestPuppetParser(TestCase):
     def test_disable(self):
         """puppet:Disable with no params parses correctly"""
         expected = ["""echo "puppet disabled by Release Engine at DATE" >> /etc/motd && puppet agent --disable --color=false"""]
-        params = {}
-        (update, cmd) = ppt._parse_Run(params, self.app_logger)
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Disable'
+        }
+        (update, cmd) = ppt._parse_Disable(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
     def test_disable_no_motd(self):
         """puppet:Disable with no motd update parses correctly"""
         # This is the same as the test_disable test
         expected = ["puppet agent --disable --color=false"]
-        params = {}
-        (update, cmd) = ppt._parse_Run(params, self.app_logger)
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Disable'
+        }
+        (update, cmd) = ppt._parse_Disable(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
     def test_disable_custom_motd(self):
         """puppet:Disable with custom motd update parses correctly"""
         expected = ["""echo "custom message" >> /etc/motd && puppet agent --disable --color=false"""]
-        params = {}
-        (update, cmd) = ppt._parse_Run(params, self.app_logger)
+        params = {
+            'hosts': ['testhost.example.com'],
+            'command': 'puppet',
+            'subcommand': 'Disable'
+        }
+        (update, cmd) = ppt._parse_Disable(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
 

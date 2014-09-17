@@ -189,10 +189,17 @@ def _parse_Run(params, app_logger):
     _cmd_parts.append("puppet agent --test")
 
     # noop?
+    if params.get('noop', False):
+        _cmd_parts.append('--noop')
 
     # tags?
+    if params.get('tags', []):
+        _cmd_parts.append('--tags')
+        _cmd_parts.extend(params.get('tags'))
 
     # server?
+    if params.get('server', False):
+        _cmd_parts.extend(['--server', params.get('server')])
 
     # Disable color so FUNC doesn't explode
     _cmd_parts.append("--color=false")
