@@ -48,112 +48,6 @@ evaluate with the provided parameters, and finally return the result.
     result = parser(params, app_logger)
     return result
 
-# def _parse_Run(params, app_logger):
-#     """ScheduleDowntime - The API Signature for this command is simple, but
-# the func method it calls can vary depending on intended result.
-
-# * HOST Downtime - Calls the func method: nagios.schedule_host_downtime
-# * Parameters: str(host), int(minutes)
-
-# * HOST and SERVICE ('ALL') Downtime - Calls the func method:
-#   nagios.schedule_host_and_svc_downtime
-# * Parameters: str(host), int(minutes)
-
-# * SERVICE Downtime - Calls the func method: nagios.schedule_svc_downtime
-# * Parameters: str(host), [service], int(minutes)"""
-#     ##################################################################
-#     # Dict of parameters to update the FSM-provided 'params' dict with.
-#     _params = {}
-#     _params['command'] = 'nagios'
-#     # List of arguments to pass to the called module method
-#     _method_args = []
-
-#     ##################################################################
-#     # Hostname the nagios server. This is the target host for the func
-#     # command. That is to say, the host which the command is sent to.
-#     nagios_url = params['nagios_url']
-#     # TODO: Handle multiple 'hosts' at once
-#     _method_args.append(params['hosts'][0])
-#     # Remember, we run this command on the nagios server:
-#     _params['hosts'] = [nagios_url]
-
-#     ##################################################################
-#     # Is a service_host set? If yes, then the "target host" is
-#     # service_host. Recall: "target_host" is the host being passed to
-#     # the nagios module to process alerts/downtime for.
-#     if params.get('service_host', '') != '':
-#         method_target_host = params['service_host']
-#     else:
-#         # .. todo:: Handle multiple params at once
-#         method_target_host = params['hosts'][0]
-
-#     _params['method_target_host'] = method_target_host
-
-#     # ## *** ###   ### *** ###   ### *** ###   ### *** ###   ### *** ##
-#     # Begin parsing the arguments to pass to the method call
-#     # ## *** ###   ### *** ###   ### *** ###   ### *** ###   ### *** ##
-
-#     ##################################################################
-#     # Figure out if we need to add the 'service' argument as well to
-#     # _method_args
-#     #
-#     # RECALL: ScheduleDowntime calls one of three func module
-#     # methods. The arguments passed to ScheduleDowntime determine
-#     # which module method is called.
-#     #
-#     # Did the playbook even bother to define 'service'? Default to
-#     # 'HOST' if 'service' is undefined.
-#     _service = params.get('service', 'HOST')
-#     if isinstance(_service, types.StringTypes):
-#         # String
-#         # Explicitly setting downtime for a host
-#         if re.match(r'^HOST$', _service, re.I):
-#             _sub_command = "schedule_host_downtime"
-
-#         # Explicitly setting downtime for a host AND all services on it
-#         elif re.match(r'^ALL$', _service, re.I):
-#             _sub_command = "schedule_host_and_svc_downtime"
-
-#         else:
-#             # If a single string was provided and that string is not
-#             # 'HOST' or 'ALL' then only a single service was named. The
-#             # func method we're calling requires 'service' as a LIST, so
-#             # let's wrap it up in one.
-#             _service = [_service]
-#             _method_args.append(_service)
-#             _sub_command = 'schedule_svc_downtime'
-#     else:
-#         # No 'else' to see here. If 'service' is a list then we leave
-#         # it alone.
-#         _method_args.append(_service)
-#         _sub_command = 'schedule_svc_downtime'
-
-#     ##################################################################
-#     # Minutes to schedule downtime for. Default: 30
-#     _minutes = params.get('minutes', 30)
-#     if not isinstance(_minutes, types.IntType):
-#         if isinstance(_minutes, types.FloatType):
-#             _minutes = int(_minutes)
-#         else:
-#             raise TypeError("Invalid data given for minutes.",
-#                             "Expecting int type.",
-#                             "Got '%s'." % _minutes)
-
-#     _params['minutes'] = _minutes
-#     _method_args.append(_minutes)
-
-#     ##################################################################
-#     # OK. We've processed all of the arguments. Lets assemble
-#     # everything and hand it back to the primary func worker.
-#     _params['subcommand'] = _sub_command
-
-#     ##################################################################
-#     # The main func worker expects what it calls "target_hosts" to be
-#     # a list. So we return the nagios_url as a list.
-#     app_logger.debug("Parsed playbook parameters: %s" % (
-#         str((_params, _method_args))))
-#     return (_params, _method_args)
-
 
 def _parse_Run(params, app_logger):
     """The point of this is to generate two output datum:
@@ -264,4 +158,5 @@ def _parse_Disable(params, app_logger):
 def process_result(result):
     """Process the result of the func command and return something
 consumable by the func worker."""
-    pass
+    return None
+
