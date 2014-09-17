@@ -9,7 +9,7 @@
 
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
-Version: 0.0.5
+Version: 0.0.6
 Release: 1%{?dist}
 
 Group: Applications/System
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Wed Sep 17 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.6-1
+- Now with puppet worker"
+
 * Fri Jul 25 2014 Steve Milner <stevem@gnulinux.net> - 0.0.5-1
 - Added more app logging.
 
