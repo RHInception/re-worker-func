@@ -185,6 +185,9 @@ def _parse_Run(params, app_logger):
         _cmd_parts.append("puppet agent --enable --color=false")
         _cmd_parts.append("&&")
 
+    # actual command
+    _cmd_parts.append("puppet agent --test")
+
     # noop?
 
     # tags?
@@ -194,6 +197,7 @@ def _parse_Run(params, app_logger):
     # Disable color so FUNC doesn't explode
     _cmd_parts.append("--color=false")
 
+    _method_args.append(" ".join(_cmd_parts))
     # Join it all together into a string
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
