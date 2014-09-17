@@ -159,4 +159,3 @@ def process_result(result):
     """Process the result of the func command and return something
 consumable by the func worker."""
     raise NotImplementedError
-
