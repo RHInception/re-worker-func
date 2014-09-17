@@ -110,19 +110,18 @@ class TestPuppetParser(TestCase):
     def test_disable(self):
         """puppet:Disable with no params parses correctly"""
 
-        with mock.patch('replugin.funcworker.puppet.datetime.datetime') as (
-                ppt.datetime.datetime):
-            ppt.datetime.datetime = mock.MagicMock('datetime')
-            ppt.datetime.datetime.now = mock.MagicMock(return_value=NOW)
+        with mock.patch('replugin.funcworker.puppet.dt') as (
+                dt):
+            dt.now.return_value = NOW
 
-        expected = ["""echo "puppet disabled by Release Engine at %s" >> /etc/motd && puppet agent --disable --color=false""" % NOW]
-        params = {
-            'hosts': ['testhost.example.com'],
-            'command': 'puppet',
-            'subcommand': 'Disable'
-        }
-        (update, cmd) = ppt._parse_Disable(params, self.app_logger)
-        self.assertEqual(cmd, expected)
+            expected = ["""echo "puppet disabled by Release Engine at %s" >> /etc/motd && puppet agent --disable --color=false""" % NOW]
+            params = {
+                'hosts': ['testhost.example.com'],
+                'command': 'puppet',
+                'subcommand': 'Disable'
+            }
+            (update, cmd) = ppt._parse_Disable(params, self.app_logger)
+            self.assertEqual(cmd, expected)
 
     def test_disable_no_motd(self):
         """puppet:Disable with no motd update parses correctly"""
@@ -151,20 +150,19 @@ class TestPuppetParser(TestCase):
 
     def test_disable_custom_motd_with_date(self):
         """puppet:Disable with custom motd with date update parses correctly"""
-        with mock.patch('replugin.funcworker.puppet.datetime.datetime') as (
-                ppt.datetime.datetime):
-            ppt.datetime.datetime = mock.MagicMock('datetime')
-            ppt.datetime.datetime.now = mock.MagicMock(return_value=NOW)
+        with mock.patch('replugin.funcworker.puppet.dt') as (
+                dt):
+            dt.now.return_value = NOW
 
-        expected = ["""echo "custom message - %s" >> /etc/motd && puppet agent --disable --color=false""" % NOW]
-        params = {
-            'hosts': ['testhost.example.com'],
-            'command': 'puppet',
-            'subcommand': 'Disable',
-            'motd': 'custom message %s'
-        }
-        (update, cmd) = ppt._parse_Disable(params, self.app_logger)
-        self.assertEqual(cmd, expected)
+            expected = ["""echo "custom message %s" >> /etc/motd && puppet agent --disable --color=false""" % NOW]
+            params = {
+                'hosts': ['testhost.example.com'],
+                'command': 'puppet',
+                'subcommand': 'Disable',
+                'motd': 'custom message %s'
+            }
+            (update, cmd) = ppt._parse_Disable(params, self.app_logger)
+            self.assertEqual(cmd, expected)
 
     # def test_good_params_ScheduleDowntime(self):
     #     """nagios:ScheduleDowntime: Parsing a correct parameter dict works"""

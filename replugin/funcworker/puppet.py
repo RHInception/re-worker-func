@@ -18,8 +18,9 @@ Puppet specific func worker
 
 import types
 import re
-import datetime
-UTCNOW = datetime.datetime.now()
+from datetime import datetime as dt
+NOW = dt.now()
+
 
 def parse_target_params(params, app_logger):
     """Parse the parameters provided by the FSM, `params`. Return the
@@ -230,7 +231,7 @@ def _parse_Disable(params, app_logger):
     _params['subcommand'] = 'run'
     _cmd_parts = []
     _method_args = []
-    motd_msg = "puppet disabled by Release Engine at %s" % UTCNOW
+    motd_msg = "puppet disabled by Release Engine at %s" % dt.now()
 
     # No motd param set, use the default message
     if params.get('motd', None) is None:
@@ -238,13 +239,13 @@ def _parse_Disable(params, app_logger):
         _cmd_parts.append("&&")
 
     # motd param set to false -> disable updating motd
-    elif params.get('motd', None) == False:
+    elif params.get('motd', None) is False:
         pass
 
     # Custom message provided
     elif isinstance(params.get('motd', None), str):
         try:
-            update_motd = params.get('motd') % datetime.datetime.now()
+            update_motd = params.get('motd') % dt.now()
         except TypeError:
             # no %s in motd msg to put the date into
             update_motd = params.get('motd')
