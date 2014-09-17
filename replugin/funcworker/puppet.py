@@ -18,7 +18,8 @@ Puppet specific func worker
 
 import types
 import re
-
+import datetime
+UTCNOW = datetime.datetime.now()
 
 def parse_target_params(params, app_logger):
     """Parse the parameters provided by the FSM, `params`. Return the
@@ -212,9 +213,10 @@ def _parse_Run(params, app_logger):
 
 
 def _parse_Enable(params, app_logger):
+    _params = {}
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
-    _method_args = []
+    _method_args = ["puppet agent --enable --color=false"]
 
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
@@ -222,10 +224,36 @@ def _parse_Enable(params, app_logger):
 
 
 def _parse_Disable(params, app_logger):
+    _params = {}
     _disable_params = ['motd']
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
+    _cmd_parts = []
     _method_args = []
+    motd_msg = "puppet disabled by Release Engine at %s" % UTCNOW
+
+    # No motd param set, use the default message
+    if params.get('motd', None) is None:
+        _cmd_parts.append("""echo "%s" >> /etc/motd""" % motd_msg)
+        _cmd_parts.append("&&")
+
+    # motd param set to false -> disable updating motd
+    elif params.get('motd', None) == False:
+        pass
+
+    # Custom message provided
+    elif isinstance(params.get('motd', None), str):
+        try:
+            update_motd = params.get('motd') % datetime.datetime.now()
+        except TypeError:
+            # no %s in motd msg to put the date into
+            update_motd = params.get('motd')
+        _cmd_parts.append("""echo "%s" >> /etc/motd""" % update_motd)
+        _cmd_parts.append("&&")
+
+    _cmd_parts.append("puppet agent --disable --color=false")
+
+    _method_args.append(" ".join(_cmd_parts))
 
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
