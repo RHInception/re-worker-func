@@ -200,9 +200,11 @@ class TestPuppetParser(TestCase):
     def test_good_process_result(self):
         """puppet:ProcessResult: Test processing puppet command results"""
         # TODO: Implement the process_result function
-        replugin.funcworker.puppet.process_result(None)
+        with self.assertRaises(NotImplementedError):
+            replugin.funcworker.puppet.process_result(None)
 
     def test_bad_process_result(self):
         """puppet:ProcessResult: Test processing puppet command results failure"""
         # TODO: Implement the process_result function
-        replugin.funcworker.puppet.process_result(None)
+        with self.assertRaises(NotImplementedError):
+            replugin.funcworker.puppet.process_result(None)
