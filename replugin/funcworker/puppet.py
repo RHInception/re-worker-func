@@ -59,6 +59,7 @@ def _parse_Run(params, app_logger):
   is *passed to the func <module>.<method> created from
   <_params['command']>.<_params['subcommand']>
     """
+    app_logger.info("Parsing puppet:Run")
     # Allowed parameters to the 'run' subcommand
     _run_params = ['server', 'noop', 'tags', 'enable']
 
@@ -67,6 +68,7 @@ def _parse_Run(params, app_logger):
     # command runner behind-the-scenes
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
+    _params['method_target_host'] = params['hosts'][0]
     # We will generate one arg here, that is the command to run
     # through func. It will be a string.
     _cmd_parts = []
@@ -126,22 +128,26 @@ def _parse_Run(params, app_logger):
 
 
 def _parse_Enable(params, app_logger):
+    app_logger.info("Parsing puppet:Enable")
     _params = {}
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
     _method_args = ["puppet agent --enable --color=false"]
     _params['cmd'] = _method_args[0]
-
+    _params['method_target_host'] = params['hosts'][0]
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
     return (_params, _method_args)
 
 
 def _parse_Disable(params, app_logger):
+    app_logger.info("Parsing puppet:Disable")
     _params = {}
+    _params['method_target_host'] = params['hosts'][0]
     _disable_params = ['motd']
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
+    _params['method_target_host'] = params['hosts'][0]
     _cmd_parts = []
     _method_args = []
     motd_msg = "puppet disabled by Release Engine at %s" % dt.now()
@@ -150,6 +156,7 @@ def _parse_Disable(params, app_logger):
     if params.get('motd', None) is None:
         _cmd_parts.append("""echo "%s" >> /etc/motd""" % motd_msg)
         _cmd_parts.append("&&")
+        _params['motd'] = """echo "%s" >> /etc/motd""" % motd_msg
 
     # motd param set to false -> disable updating motd
     elif params.get('motd', None) is False:
@@ -171,7 +178,7 @@ def _parse_Disable(params, app_logger):
     _method_args.append(" ".join(_cmd_parts))
     _params['cmd'] = _method_args[0]
 
-    app_logger.debug("Parsed playbook parameters: %s" % (
+    app_logger.info("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
     return (_params, _method_args)
 
