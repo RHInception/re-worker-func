@@ -100,7 +100,25 @@ def _parse_Run(params, app_logger):
     # Disable color so FUNC doesn't explode
     _cmd_parts.append("--color=false")
 
+    ##################################################################
+    # puppet:Run is basically a subclass of command:run. command:run
+    # has one parameter, 'cmd'.
+    #
+    # Once this parser finishes, the value of _method_args is passed
+    # to the invoked func method.
+    #
+    # For the purpose of bookkeeping, we will update the 'parameters'
+    # passed in from the FSM to have the required 'cmd' parameter as
+    # well. We'll simply set it equal to _method_args[0] (because we
+    # only have one argument, that is the puppet command(s) to run.
+    #
+    # This doesn't have *ANY* material effect on the behavior of the
+    # rest of this worker, it simply satisfies a requirement in
+    # re-worker which ensures that any passed in parameters meet the
+    # specification for the called method.
     _method_args.append(" ".join(_cmd_parts))
+    _params['cmd'] = _method_args[0]
+
     # Join it all together into a string
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
@@ -112,6 +130,7 @@ def _parse_Enable(params, app_logger):
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
     _method_args = ["puppet agent --enable --color=false"]
+    _params['cmd'] = _method_args[0]
 
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
@@ -148,7 +167,9 @@ def _parse_Disable(params, app_logger):
 
     _cmd_parts.append("puppet agent --disable --color=false")
 
+    ##################################################################
     _method_args.append(" ".join(_cmd_parts))
+    _params['cmd'] = _method_args[0]
 
     app_logger.debug("Parsed playbook parameters: %s" % (
         str((_params, _method_args))))
