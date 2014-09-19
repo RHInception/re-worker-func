@@ -27,7 +27,7 @@ except ImportError:
 
 setup(
     name='reworkerfunc',
-    version='0.0.6',
+    version='0.0.7',
     description='',
     author='See AUTHORS file',
     author_email='inception@redhat.com',

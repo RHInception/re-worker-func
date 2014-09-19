@@ -1,8 +1,13 @@
 {
     "queue": "funcpuppet",
     "puppet": {
-	"Run": ["noop", "enable", "server", "tags"],
-	"Enable": [],
-	"Disable": ["motd"]
+        "Run": ["noop", "enable", "server", "tags"],
+        "Enable": [],
+        "Disable": ["motd"]
+    }
+    "return_codes": {
+        "Run": [0, 2],
+        "Enable": [0, 2],
+        "Disable": [0, 2],
     }
 }

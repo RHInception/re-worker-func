@@ -9,8 +9,8 @@
 
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
-Version: 0.0.6
-Release: 3%{?Dist}
+Version: 0.0.7
+Release: 1%{?Dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,8 +40,8 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
-* Thu Sep 18 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.6-3
-- fix parsing error
+* Thu Sep 18 2014 Steve Milner <stevem@gnulinux.net> - 0.0.7-1
+- Exit codes can now be defined.
 
 * Thu Sep 18 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.6-2
 - Fix issue with returned params update dict not setting a required key

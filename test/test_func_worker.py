@@ -458,6 +458,79 @@ class TestFuncWorker(TestCase):
                     fc.call_count = 0
                     self._reset_mocks()
 
+    def test_return_codes_are_honored(self, fc):
+        """
+        When a return code section exists, honor it.
+        """
+        results = [
+            10,
+            "stdout here",
+            "stderr here"
+        ]
+
+        # The output from job_status ...
+        fc().job_status.return_value = (
+            func.jobthing.JOB_ID_FINISHED,
+            {'127.0.0.1': results})
+
+        with nested(
+                mock.patch('pika.SelectConnection'),
+                mock.patch('replugin.funcworker.FuncWorker.notify'),
+                mock.patch('replugin.funcworker.FuncWorker.send')):
+            worker = funcworker.FuncWorker(
+                MQ_CONF,
+                logger=self.app_logger,
+                config_file='test/modified_yumcmd.json',
+                output_dir='/tmp/logs/')
+
+            # Make the Func return data
+            # NOTE: this causes fc's call count to ++
+
+            target = getattr(getattr(fc(), 'yumcmd'), 'update')
+            target.return_value = results
+            worker._on_open(self.connection)
+            worker._on_channel_open(self.channel)
+
+            body = {
+                'parameters': {
+                    'command': 'yumcmd',
+                    'subcommand': 'update',
+                    'hosts': ['127.0.0.1'],
+                }
+            }
+            #for key in rargs:
+            #    body['parameters'][key] = 'test_data'
+
+            # Execute the call
+            worker.process(
+                self.channel,
+                self.basic_deliver,
+                self.properties,
+                body,
+                self.logger)
+
+            assert worker.send.call_count == 2  # start then success
+            assert worker.send.call_args[0][2] == {
+                'status': 'completed', 'data': results,
+            }
+
+            # Notification should succeed
+            assert worker.notify.call_count == 1
+            expected = 'successfully executed'
+            assert expected in worker.notify.call_args[0][1]
+            assert worker.notify.call_args[0][2] == 'completed'
+            # Log should happen as info at least once
+            assert self.logger.info.call_count >= 1
+
+            # Func should call to create the client
+            # With mocking and expected calls this will be at least 3
+            assert fc.call_count >= 3
+            # For static_hosts
+            assert fc.call_args[0][0] == '127.0.0.1'
+            # And the client should execute expected calls
+            assert target.call_count == 1
+            #target.assert_called_with(*[
+            #    'test_data' for x in range(len(rargs))])
 
     def test_good_request(self, fc):
         """
@@ -826,7 +899,6 @@ class TestFuncWorker(TestCase):
                         self.logger)
 
                     assert worker.send.call_count == 2  # start then success
-                    print worker.send.call_args[0][2]
                     assert worker.send.call_args[0][2] == {
                         'status': 'completed', 'data': results,
                     }
@@ -908,7 +980,6 @@ class TestFuncWorker(TestCase):
                     self.logger)
 
                 assert worker.send.call_count == 2  # start then success
-                print worker.send.call_args[0][2]
                 assert worker.send.call_args[0][2]['status'] == 'failed'
 
                 # Notification should succeed

@@ -1,0 +1,11 @@
+{
+    "queue": "funcyumcmd",
+    "yumcmd": {
+        "install": ["package"],
+        "remove": ["package"],
+        "update": []
+    },
+    "return_codes": {
+        "update": [10]
+    }
+}

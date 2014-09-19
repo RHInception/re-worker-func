@@ -105,6 +105,15 @@ class FuncWorker(Worker):
             if 'hosts' not in params.keys() or type(params['hosts']) != list:
                 raise FuncWorkerError(
                     'This worker requires hosts to be a list of hosts.')
+
+            # Find out if we have special return codes
+            try:
+                return_codes = self._config['return_codes'][params['subcommand']]
+            except KeyError, ke:
+                # Else fall back to 0 being the only success code
+                self.app_logger.debug('No special return codes set.')
+                return_codes = [0]
+
             # Get tries/check_scripts or set defaults
             _tries = int(params.get('tries', 1))
             _check_scripts = params.get('check_scripts', [])
@@ -201,10 +210,12 @@ class FuncWorker(Worker):
                     # item 0 = return code
                     # item 1 = stdout
                     # item 2 = stderr
-                    if results[0] != 0:
+                    if results[0] not in return_codes:
                         success = False
-                        output.info('%s returned %s for command %s' % (
-                            target_hosts, results[0], called))
+                        output.info(
+                            '%s returned %s for command %s which is not a '
+                            'success return code (%s)' % (
+                                target_hosts, results[0], called, return_codes))
 
                     if success and len(_check_scripts):
                         # Execute all check scripts.
@@ -339,6 +350,7 @@ module method).
                                       "parser")
                 target_params = []
                 required_params = command_cfg[params['subcommand']]
+
                 for required in required_params:
                     if required not in params.keys():
                         raise FuncWorkerError(
