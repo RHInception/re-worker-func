@@ -163,7 +163,8 @@ def _parse_Disable(params, app_logger):
         pass
 
     # Custom message provided
-    elif isinstance(params.get('motd', None), str):
+    elif (isinstance(params.get('motd', None), str) or
+          isinstance(params.get('motd', None), unicode)):
         try:
             update_motd = params.get('motd') % dt.now()
         except TypeError:

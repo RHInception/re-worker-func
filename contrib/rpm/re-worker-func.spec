@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.0.7
-Release: 1%{?Dist}
+Release: 2%{?Dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Mon Sep 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.7-2
+- puppet:Disable using 'motd' param now behaves correctly if the token is a 'str' or 'unicode' type
+
 * Thu Sep 18 2014 Steve Milner <stevem@gnulinux.net> - 0.0.7-1
 - Exit codes can now be defined.
 
