@@ -1,0 +1,127 @@
+How to write specialized parsers
+================================
+
+In this directory (replugin/funcworker/) create a new .py file named
+so that it matches the COMMAND you want a special parser for.
+
+Ex, if the command is "puppet:Run" you want to create a file called
+"puppet.py".
+
+--------------
+
+Now, you need special entry/exit functions:
+
+    def parse_target_params(params, app_logger):
+
+    def process_result(result):
+
+Copy these from puppet.py or nagios.py
+
+-------------
+
+For each SUBCOMMAND you need a parser for, example: puppet:Run, 'Run'
+is the SUBCOMMAND
+
+- Create a new function:
+
+    def _parse_SUBCOMMAND(params, app_logger):
+
+ex:
+
+    def _parse_Run(params, app_logger):
+
+------------
+
+For the parser api to work correctly, your _parse_FOO functions MUST
+to return a 2-tuple:
+
+- Item 0 is a DICTIONARY used to update the 'params' dict passed in
+  from the FSM. Usually this is called "_params"
+
+- Item 1 is a LIST of parameters passed to the (eventually) called
+  func method. Usually this is called "_method_args"
+
+------------
+
+What to put into _params:
+
+You MUST have a key called 'method_target_host', typically this is set
+to 'params['hosts'][0]'. If this key is NOT set when _parse_FOO
+returns control back to __init__.py, then the DEFAULT parser is
+invoked instead. Said differently, if you don't set
+_params['method_target_host'] then nothing special happens and the
+default parser is used.
+
+What else you add into _params is up to you. In the end though, what
+you're doing is effectively turning (using puppet:Run as an example)
+
+   params = {
+        "parameters": {
+            "hosts": [ "host01.example.com" ],
+            "command": "bigip",
+            "subcommand": "OutOfRotation"
+        },
+        "group": "test",
+        "dynamic": {},
+        "notify": {}
+    }
+
+into
+
+    {
+        "parameters": {
+            "hosts": [ "host01.example.com" ],
+            "command": "command",
+            "subcommand": "run",
+	    "cmd": "the command you want to run on the remote server"
+        },
+        "group": "test",
+        "dynamic": {},
+        "notify": {}
+    }
+
+by means of
+
+    params.update(_params)
+
+NOTE: the value of _params['cmd'] in this example (or any other
+use-case where you're piggy-backing on command:run) is NOT ACTUALLY
+USED.
+
+Allow me to repeat that
+
+    YOU MUST SET 'cmd' IF YOU'RE USING THE COMMAND WORKER
+
+    BUT THE VALUE OF 'cmd' IS NOT ACTUALLY USED
+
+Yes, it's strange. But that's how it works. If 'cmd' isn't set then
+the validation written later in __init__.py will fail your command.
+
+
+----------
+
+What to put into _method_args:
+
+_method_args is the list of parameters ACTUALLY passed to the
+command:Run worker.
+
+This should match what you put into _params['cmd'].
+
+Take for example:
+
+    'command:run': {
+        'cmd': 'foo'
+    }
+
+This step has one actual parameter. So _method_args is just a list with one
+item in it.
+
+But if you're overriding a func command that takes multiple
+parameters, like the nagios:ScheduleDowntime command does, then your
+_method_args list will contain more than one element.
+
+-----------
+
+And what about "process_result"
+
+Well, this functionality is not implemented yet.
