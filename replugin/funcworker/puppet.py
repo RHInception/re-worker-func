@@ -18,7 +18,11 @@ Puppet specific func worker
 
 import types
 import re
+
 from datetime import datetime as dt
+
+from replugin.funcworker import block_bad_chars
+
 NOW = dt.now()
 
 
@@ -46,6 +50,7 @@ evaluate with the provided parameters, and finally return the result.
         raise err
 
     result = parser(params, app_logger)
+    block_bad_chars(result[1])
     return result
 
 

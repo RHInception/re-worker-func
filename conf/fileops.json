@@ -1,0 +1,12 @@
+{
+    "queue": "fileops",
+    "fileops": {
+        "ChangeOwnership": ["path", "user", "group", "recursive"],
+        "ChangePermissions": ["path", "mode", "recursive"],
+        "FindInFiles": ["path", "regexp", "recursive", "case_insensitive"],
+        "Move": ["path", "to"],
+        "Remove": ["path", "recursive"],
+        "Touch": ["path"],
+        "Tar": ["path", "to", "compression"]
+    }
+}

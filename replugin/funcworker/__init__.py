@@ -26,6 +26,20 @@ from func.minion.codes import FuncException
 import func.CommonErrors
 import traceback
 import sys
+import re
+
+
+BLACKLIST = re.compile('[;|&$><]+')
+
+
+def block_bad_chars(items):
+    """
+    Hack to block obvious shell stuff.
+    """
+    for item in items:
+        if BLACKLIST.findall(item):
+            raise TypeError('An unsafe char was attempted. Not executing.')
+    return items
 
 
 def expand_globs(globs, app_logger):

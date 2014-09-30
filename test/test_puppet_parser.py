@@ -183,7 +183,7 @@ class TestPuppetParser(TestCase):
 
     @mock.patch('replugin.funcworker.puppet._parse_Enable')
     def test_bad_parse_target_params(self, ppt_enable):
-        """puppet:Unable: Invalid subcommands raise while looking for parser"""
+        """puppet:Enable: Invalid subcommands raise while looking for parser"""
         ppt_enable.return_value = ({}, [])
 
         params = {
@@ -196,6 +196,24 @@ class TestPuppetParser(TestCase):
         with self.assertRaises(ValueError):
             (_params_result,
              _method_args) = ptp(params, self.app_logger)
+
+    @mock.patch('replugin.funcworker.puppet._parse_Enable')
+    def test_dangerous_parse_target_params(self, ppt_Enable):
+        """fileops:Enable: Verify that if bad shell chars return it's blocked"""
+        for bad_data in ([';'], ['&&'], ['|'], ['$'], ['>'], ['<']):
+            ppt_Enable.reset_mock()
+            ppt_Enable.return_value = ({}, bad_data)
+
+            params = {
+                'command': 'puppet',
+                'subcommand': 'Enable'
+            }
+
+            ptp = replugin.funcworker.puppet.parse_target_params
+
+            with self.assertRaises(TypeError):
+                (_params_result,
+                 _method_args) = ptp(params, self.app_logger)
 
     def test_good_process_result(self):
         """puppet:ProcessResult: Test processing puppet command results"""
