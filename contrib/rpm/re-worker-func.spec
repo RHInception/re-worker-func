@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.0.8
-Release: 1%{?Dist}
+Release: 2%{?Dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Wed Oct  1 2014 Steve Milner <stevem@gnulinux.net> - 0.0.8-2
+- Disabling puppet motd support.
+
 * Tue Sep 30 2014 Steve Milner <stevem@gnulinux.net> - 0.0.8-1
 - FileOps now added.
 
