@@ -29,7 +29,7 @@ import sys
 import re
 
 
-BLACKLIST = re.compile('[;|&$><]+')
+BLACKLIST = re.compile('[;|&$><#]+')
 
 
 def block_bad_chars(items):

@@ -157,26 +157,27 @@ def _parse_Disable(params, app_logger):
     _method_args = []
     motd_msg = "puppet disabled by Release Engine at %s" % dt.now()
 
+    # FIXME: Disabled due to use of shell logic
     # No motd param set, use the default message
-    if params.get('motd', None) is None:
-        _cmd_parts.append("""echo "%s" >> /etc/motd""" % motd_msg)
-        _cmd_parts.append("&&")
-        _params['motd'] = """echo "%s" >> /etc/motd""" % motd_msg
+    # if params.get('motd', None) is None:
+    #    _cmd_parts.append("""echo "%s" >> /etc/motd""" % motd_msg)
+    #    _cmd_parts.append("&&")
+    #    _params['motd'] = """echo "%s" >> /etc/motd""" % motd_msg
 
     # motd param set to false -> disable updating motd
-    elif params.get('motd', None) is False:
-        pass
+    # elif params.get('motd', None) is False:
+    #    pass
 
     # Custom message provided
-    elif (isinstance(params.get('motd', None), str) or
-          isinstance(params.get('motd', None), unicode)):
-        try:
-            update_motd = params.get('motd') % dt.now()
-        except TypeError:
-            # no %s in motd msg to put the date into
-            update_motd = params.get('motd')
-        _cmd_parts.append("""echo "%s" >> /etc/motd""" % update_motd)
-        _cmd_parts.append("&&")
+    # elif (isinstance(params.get('motd', None), str) or
+    #      isinstance(params.get('motd', None), unicode)):
+    #    try:
+    #        update_motd = params.get('motd') % dt.now()
+    #    except TypeError:
+    #        # no %s in motd msg to put the date into
+    #        update_motd = params.get('motd')
+    #    _cmd_parts.append("""echo "%s" >> /etc/motd""" % update_motd)
+    #    _cmd_parts.append("&&")
 
     _cmd_parts.append("puppet agent --disable --color=false")
 
