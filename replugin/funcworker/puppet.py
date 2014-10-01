@@ -84,9 +84,10 @@ def _parse_Run(params, app_logger):
     ##################################################################
 
     # enable?
-    if params.get('enable', False):
-        _cmd_parts.append("puppet agent --enable --color=false")
-        _cmd_parts.append("&&")
+    # FIXME: Need to move away from shell logic
+    # if params.get('enable', False):
+    #    _cmd_parts.append("puppet agent --enable --color=false")
+    #    _cmd_parts.append("&&")
 
     # actual command
     _cmd_parts.append("puppet agent --test")
