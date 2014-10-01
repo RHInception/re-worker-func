@@ -43,7 +43,7 @@ class TestFileOpsParser(TestCase):
 
     def test_change_ownership_with_recursive(self):
         """fileops:ChangeOwnership with recursive parses correctly"""
-        expected = ['chown -r user.group /tmp/file']
+        expected = ['chown -R user.group /tmp/file']
         params = {
             'hosts': ['testhost.example.com'],
             'command': 'fileops',

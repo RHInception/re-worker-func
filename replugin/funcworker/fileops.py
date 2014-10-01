@@ -70,7 +70,7 @@ def _parse_ChangeOwnership(params, app_logger):
         recursive = params.get('recursive', None)
 
         if recursive:
-            _method_args.append('-r')
+            _method_args.append('-R')
 
         _method_args.append('%s.%s' % (user, group))
 
