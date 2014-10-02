@@ -383,7 +383,7 @@ class TestFileOpsParser(TestCase):
 
     def test_tar_multiple(self):
         """fileops:Tar verify tar with multiple locations"""
-        expected = ['tar -c -f -z file.tar.gz /a/path/to/file /and/this']
+        expected = ['tar -c -z -f file.tar.gz /a/path/to/file /and/this']
         params = {
             'hosts': ['testhost.example.com'],
             'command': 'fileops',

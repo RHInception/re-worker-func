@@ -258,7 +258,7 @@ def _parse_Tar(params, app_logger):
     _params = {}
     _params['command'] = 'command'
     _params['subcommand'] = 'run'
-    _method_args = ['tar -c -f']
+    _method_args = ['tar -c']
     _params['cmd'] = _method_args[0]
     _params['method_target_host'] = params['hosts'][0]
 
@@ -276,6 +276,7 @@ def _parse_Tar(params, app_logger):
                     'Unknown compression requested: %s' % compression)
                 raise TypeError('Unknown compression given!')
 
+        _method_args.append('-f')
         _method_args.append(to_path)
 
         if not isinstance(filenames, types.ListType):

@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.0.8
-Release: 4%{?Dist}
+Release: 5%{?Dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Wed Oct  2 2014 Steve Milner <stevem@gnulinux.net> - 0.0.8-5
+- fileops Tar has to have switches flipped.
+
 * Wed Oct  1 2014 Steve Milner <stevem@gnulinux.net> - 0.0.8-4
 - fileops ChangeOwnership needs to use a capital R.
 
