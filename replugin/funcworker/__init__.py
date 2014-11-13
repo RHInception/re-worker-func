@@ -215,9 +215,9 @@ class FuncWorker(Worker):
                     #        output like structure. It's a hack.
                     # If this wasn't a system command the results may
                     # be a string ...
-                    if type(results) == str:
-                        results = [0, results, '']
                     # ... or a list of strings
+                    if type(results) in (str, int):
+                        results = [0, str(results), '']
                     elif type(results[0]) == str:
                         results = [0, ", ".join(results), '']
 
