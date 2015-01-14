@@ -72,6 +72,10 @@ class FuncWorker(Worker):
     """
     Simple worker which executes remote func calls.
     """
+    # The subcommands for the following commands must be downcased
+    # before attempting to make the actual func module method calls.
+    downcase_subcommands = ['command', 'service', 'yumcmd']
+
     def process(self, channel, basic_deliver, properties, body, output):
         """Executes remote func calls when requested. Only configured
         calls are allowed!
@@ -137,6 +141,9 @@ class FuncWorker(Worker):
             (_update_params, target_params) = self.parse_params(
                 params, command_cfg)
             params.update(_update_params)
+
+            if params['command'] in self.downcase_subcommands:
+                params['subcommand'] = params['subcommand'].lower()
 
             try:
                 output.info('Executing func command ...')

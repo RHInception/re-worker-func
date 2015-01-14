@@ -39,8 +39,8 @@ MQ_CONF = {
 
 CONFIG_FILES = (
     # FILENAME            COMMAND    SUBCMD   REQUIRED ARGS
-    ('conf/service.json', 'service', 'start', ['service']),
-    ('conf/yumcmd.json', 'yumcmd', 'update', [])
+    ('conf/service.json', 'service', 'Start', ['service']),
+    ('conf/yumcmd.json', 'yumcmd', 'Update', [])
 )
 
 NAGIOS_CONFIG_FILE = (
@@ -101,15 +101,15 @@ class TestFuncWorker(TestCase):
         Common asserts for handled errors.
         """
         # The FSM should be notified that this failed
-        assert worker.send.call_count == 2  # start then error
-        assert worker.send.call_args[0][2]['status'] == 'failed'
+        self.assertEqual(worker.send.call_count, 2)  # start then error
+        self.assertEqual(worker.send.call_args[0][2]['status'], 'failed')
 
         # Notification should be a failure
-        assert worker.notify.call_count == 1
-        assert error_msg in worker.notify.call_args[0][1]
-        assert worker.notify.call_args[0][2] == 'failed'
+        self.assertEqual(worker.notify.call_count, 1)
+        self.assertIn(error_msg, worker.notify.call_args[0][1])
+        self.assertEqual(worker.notify.call_args[0][2], 'failed')
         # Log should happen as an error
-        assert self.logger.error.call_count == 1
+        self.assertEqual(self.logger.error.call_count, 1)
 
     def test_command_params(self, fc):
         """
@@ -328,7 +328,7 @@ class TestFuncWorker(TestCase):
                     # Make the Func return data
                     # NOTE: this causes fc's call count to ++
 
-                    target = getattr(getattr(fc(), cmd), sub)
+                    target = getattr(getattr(fc(), cmd), sub.lower())
                     target.return_value = results
                     worker._on_open(self.connection)
                     worker._on_channel_open(self.channel)
@@ -407,7 +407,7 @@ class TestFuncWorker(TestCase):
                     # Make the Func return data
                     # NOTE: this causes fc's call count to ++
 
-                    target = getattr(getattr(fc(), cmd), sub)
+                    target = getattr(getattr(fc(), cmd), sub.lower())
                     target.return_value = results
                     worker._on_open(self.connection)
                     worker._on_channel_open(self.channel)
@@ -494,7 +494,7 @@ class TestFuncWorker(TestCase):
             body = {
                 'parameters': {
                     'command': 'yumcmd',
-                    'subcommand': 'update',
+                    'subcommand': 'Update',
                     'hosts': ['127.0.0.1'],
                 }
             }
@@ -510,9 +510,9 @@ class TestFuncWorker(TestCase):
                 self.logger)
 
             assert worker.send.call_count == 2  # start then success
-            assert worker.send.call_args[0][2] == {
+            self.assertEqual(worker.send.call_args[0][2], {
                 'status': 'completed', 'data': results,
-            }
+            })
 
             # Notification should succeed
             assert worker.notify.call_count == 1
@@ -564,7 +564,7 @@ class TestFuncWorker(TestCase):
                     # Make the Func return data
                     # NOTE: this causes fc's call count to ++
 
-                    target = getattr(getattr(fc(), cmd), sub)
+                    target = getattr(getattr(fc(), cmd), sub.lower())
                     target.return_value = results
                     worker._on_open(self.connection)
                     worker._on_channel_open(self.channel)
@@ -643,7 +643,7 @@ class TestFuncWorker(TestCase):
 
                 # Make the Func return data
                 # NOTE: this causes fc's call count to ++
-                fc_cmd = getattr(getattr(fc(), cmd), sub)
+                fc_cmd = getattr(getattr(fc(), cmd), sub.lower())
                 fc_cmd.return_value = results
 
                 worker._on_open(self.connection)
@@ -669,7 +669,7 @@ class TestFuncWorker(TestCase):
 
                 self._assert_error_conditions(
                     worker, 'FuncWorker failed trying to execute %s.%s' % (
-                        cmd, sub))
+                        cmd, sub.lower()))
             # Force reset
             fc.reset_mock()
             self._reset_mocks()
@@ -712,7 +712,7 @@ class TestFuncWorker(TestCase):
                 fc().job_status.return_value = (
                     func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
 
-                target = getattr(getattr(fc(), cmd), sub)
+                target = getattr(getattr(fc(), cmd), sub.lower())
                 target.return_value = results
                 worker._on_open(self.connection)
                 worker._on_channel_open(self.channel)
@@ -794,7 +794,7 @@ class TestFuncWorker(TestCase):
                     output_dir='/tmp/logs/')
 
 
-                target = getattr(getattr(fc(), cmd), sub)
+                target = getattr(getattr(fc(), cmd), sub.lower())
                 target.return_value = results
                 worker._on_open(self.connection)
                 worker._on_channel_open(self.channel)
@@ -873,7 +873,7 @@ class TestFuncWorker(TestCase):
                     fc().job_status.return_value = (
                     func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
 
-                    target = getattr(getattr(fc(), cmd), sub)
+                    target = getattr(getattr(fc(), cmd), sub.lower())
                     target.return_value = results
                     worker._on_open(self.connection)
                     worker._on_channel_open(self.channel)
@@ -954,7 +954,7 @@ class TestFuncWorker(TestCase):
                 fc().job_status.return_value = (
                     func.jobthing.JOB_ID_FINISHED, {'127.0.0.1': results})
 
-                target = getattr(getattr(fc(), cmd), sub)
+                target = getattr(getattr(fc(), cmd), sub.lower())
                 target.return_value = results
                 worker._on_open(self.connection)
                 worker._on_channel_open(self.channel)

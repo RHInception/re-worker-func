@@ -1,8 +1,8 @@
 {
     "queue": "funcyumcmd",
     "yumcmd": {
-        "install": ["package"],
-        "remove": ["package"],
-        "update": []
+        "Install": ["package"],
+        "Remove": ["package"],
+        "Update": []
     }
 }

@@ -1,10 +1,10 @@
 {
     "queue": "funcservice",
     "service": {
-        "stop": ["service"],
-        "start": ["service"],
-        "restart": ["service"],
-        "reload": ["service"],
-        "status": ["service"]
+        "Stop": ["service"],
+        "Start": ["service"],
+        "Restart": ["service"],
+        "Reload": ["service"],
+        "Status": ["service"]
     }
 }
