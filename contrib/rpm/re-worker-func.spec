@@ -10,7 +10,7 @@
 Name: re-worker-func
 Summary: RE Worker to run commands over Func
 Version: 0.1.0
-Release: 1%{?Dist}
+Release: 2%{?Dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -40,6 +40,9 @@ Release Engine Worker to run commands over Func.
 %exclude %{python2_sitelib}/%{_pkg_name}/__init__.py*
 
 %changelog
+* Wed Jan 21 2015 Tim Bielawa <tbielawa@redhat.com> - 0.1.0-2
+- Don't allow enable:True in puppet:Run. RE: DE7743
+
 * Wed Jan 14 2015 Tim Bielawa <tbielawa@redhat.com> - 0.1.0-1
 - Subcommand names must begin with Capital letters now, per US58857
 
