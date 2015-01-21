@@ -81,6 +81,10 @@ class TestPuppetParser(TestCase):
 
     '''
     # FIXME
+    #
+    # No longer valid. See DE7743 for details. (Basically, we don't get to use
+    # shell '&&' chars anymore and so puppet:Run doesn't allow enable:True any more.
+    #
     def test_run_enable(self):
         """puppet:Run with agent enable parses correctly"""
         expected = ["puppet agent --enable --color=false && puppet agent --test --color=false"]
