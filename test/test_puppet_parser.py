@@ -79,24 +79,17 @@ class TestPuppetParser(TestCase):
         (update, cmd) = ppt._parse_Run(params, self.app_logger)
         self.assertEqual(cmd, expected)
 
-    '''
-    # FIXME
-    #
-    # No longer valid. See DE7743 for details. (Basically, we don't get to use
-    # shell '&&' chars anymore and so puppet:Run doesn't allow enable:True any more.
-    #
     def test_run_enable(self):
-        """puppet:Run with agent enable parses correctly"""
-        expected = ["puppet agent --enable --color=false && puppet agent --test --color=false"]
+        """puppet:Run with agent enable raises"""
         params = {
             'hosts': ['testhost.example.com'],
             'command': 'puppet',
             'subcommand': 'Run',
             'enable': True
         }
-        (update, cmd) = ppt._parse_Run(params, self.app_logger)
-        self.assertEqual(cmd, expected)
-    '''
+        with self.assertRaises(ValueError):
+            (update, cmd) = ppt._parse_Run(params, self.app_logger)
+
     ##################################################################
     # The "puppet:Enable" family
     ##################################################################

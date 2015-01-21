@@ -344,12 +344,12 @@ module method).
                                   "for this subcommand")
             pass
         except ValueError, e:
-            self.app_logger.error("Could not find parser for specified "
+            self.app_logger.error("Could not find parser or failed to parse specified "
                                   "subcommand: %s" % params['subcommand'])
-            # The handler was imported, but there is no parser for
-            # the given sub-command. Or in other words, this func
-            # worker doesn't have the requested subcommand. Sorry,
-            # bud.
+            # The handler was imported, but: there is no parser for
+            # the given sub-command, or an invalid parameter was
+            # provided.. Or in other words, this func worker doesn't
+            # support the requested subcommand/arg combo. Sorry, bud.
             self.app_logger.error(e)
             raise FuncWorkerError(
                 'Requested subcommand for %s is not supported '

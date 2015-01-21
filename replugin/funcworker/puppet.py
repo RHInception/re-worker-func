@@ -66,7 +66,7 @@ def _parse_Run(params, app_logger):
     """
     app_logger.info("Parsing puppet:Run")
     # Allowed parameters to the 'run' subcommand
-    _run_params = ['server', 'noop', 'tags', 'enable']
+    _run_params = ['server', 'noop', 'tags']
 
     _params = {}
     # Override the default cmd/subcmd to call the general purpose
@@ -83,11 +83,8 @@ def _parse_Run(params, app_logger):
     # Begin building command string
     ##################################################################
 
-    # enable?
-    # FIXME: Need to move away from shell logic
-    # if params.get('enable', False):
-    #    _cmd_parts.append("puppet agent --enable --color=false")
-    #    _cmd_parts.append("&&")
+    if 'enable' in params:
+        raise ValueError('"enable" is not a valid parameter for the puppet:Run command')
 
     # actual command
     _cmd_parts.append("puppet agent --test")
